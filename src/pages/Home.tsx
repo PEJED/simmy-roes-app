@@ -1,21 +1,41 @@
+import { useState } from 'react';
+import CourseList from '../components/CourseList';
+import CourseDetailsModal from '../components/CourseDetailsModal';
+import { courses } from '../data/courses';
+import type { Course } from '../types/Course';
+
 const Home = () => {
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+
+  const handleCourseClick = (course: Course) => {
+    setSelectedCourse(course);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedCourse(null);
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-      <header className="mb-8">
-        <h1 className="text-4xl font-bold text-blue-800 text-center">
+    <div className="flex flex-col items-center min-h-screen bg-gray-50 p-4">
+      <header className="mb-12 mt-8">
+        <h1 className="text-4xl font-bold text-blue-900 text-center">
           Επιλογή Ροών ΣΗΜΜΥ
         </h1>
-      </header>
-      <main className="max-w-2xl w-full bg-white p-8 rounded-lg shadow-md">
-        <p className="text-lg text-gray-700 mb-4 text-center">
-          Καλώς ήρθατε στην εφαρμογή επιλογής ροών για τη σχολή Ηλεκτρολόγων Μηχανικών και Μηχανικών Υπολογιστών του ΕΜΠ.
+        <p className="text-gray-600 mt-2 text-center">
+            Εξερευνήστε τα μαθήματα και επιλέξτε την κατεύθυνσή σας.
         </p>
-        <div className="text-center">
-           <button className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
-             Ξεκινήστε
-           </button>
-        </div>
+      </header>
+
+      <main className="w-full max-w-7xl mx-auto">
+          <CourseList courses={courses} onCourseClick={handleCourseClick} />
       </main>
+
+      {selectedCourse && (
+        <CourseDetailsModal
+            course={selectedCourse}
+            onClose={handleCloseModal}
+        />
+      )}
     </div>
   );
 };
