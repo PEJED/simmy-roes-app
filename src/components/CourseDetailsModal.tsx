@@ -1,6 +1,13 @@
 import type { Course } from '../types/Course';
 
-const CourseDetailsModal = ({ course, onClose }: { course: Course | null, onClose: () => void }) => {
+interface CourseDetailsModalProps {
+    course: Course | null;
+    onClose: () => void;
+    onToggleSelect: (course: Course) => void;
+    isSelected: boolean;
+}
+
+const CourseDetailsModal = ({ course, onClose, onToggleSelect, isSelected }: CourseDetailsModalProps) => {
     if (!course) return null;
 
     return (
@@ -35,6 +42,9 @@ const CourseDetailsModal = ({ course, onClose }: { course: Course | null, onClos
                         <span className="bg-purple-100 text-purple-800 text-sm font-medium px-3 py-1 rounded">
                             {course.ects} ECTS
                         </span>
+                         <span className="bg-gray-100 text-gray-800 text-sm font-medium px-3 py-1 rounded uppercase">
+                            {course.type}
+                        </span>
                     </div>
 
                     <div>
@@ -45,7 +55,18 @@ const CourseDetailsModal = ({ course, onClose }: { course: Course | null, onClos
                     </div>
                 </div>
 
-                <div className="mt-8 flex justify-end">
+                <div className="mt-8 flex justify-between items-center">
+                    <button
+                        onClick={() => onToggleSelect(course)}
+                        className={`px-6 py-2 rounded font-medium transition-colors ${
+                            isSelected
+                                ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }`}
+                    >
+                        {isSelected ? 'Αφαίρεση' : 'Επιλογή Μαθήματος'}
+                    </button>
+
                     <button
                         onClick={onClose}
                         className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"
