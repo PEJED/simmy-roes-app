@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useWizard } from '../../context/WizardContext';
 import { COMBINATIONS, type Combination } from '../../data/combinations';
-import { FLOW_NAMES, DIRECTION_INFO, type FlowSelection } from '../../utils/flowValidation';
+import { FLOW_NAMES, FLOW_DESCRIPTIONS, FLOW_DETAILS, DIRECTION_INFO, type FlowSelection } from '../../utils/flowValidation';
 
 const Step2Flows: React.FC = () => {
   const {
@@ -13,6 +13,8 @@ const Step2Flows: React.FC = () => {
     resetFlowSelections,
     setStep
   } = useWizard();
+
+  const [showFlowInfo, setShowFlowInfo] = useState(false);
 
   if (!direction) return <div>No direction selected</div>;
 
@@ -97,11 +99,19 @@ const Step2Flows: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
-      <div className="text-center mb-6">
+      <div className="text-center mb-6 relative">
         <h2 className="text-2xl font-bold text-gray-800 mb-1">Επιλογή Συνδυασμού Ροών</h2>
-        <p className="text-gray-600 text-sm">
+        <p className="text-gray-600 text-sm mb-4">
           Κατεύθυνση: <span className="font-semibold text-blue-700">{DIRECTION_INFO[direction].name}</span>
         </p>
+
+        <button
+          onClick={() => setShowFlowInfo(true)}
+          className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          Τι είναι αυτές οι ροές;
+        </button>
       </div>
 
       {/* Combinations Grid - Compact */}
@@ -231,6 +241,42 @@ const Step2Flows: React.FC = () => {
                  );
                })}
              </div>
+          </div>
+        </div>
+      )}
+
+      {/* Flow Info Modal */}
+      {showFlowInfo && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowFlowInfo(false)}>
+          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6 sticky top-0 bg-white pb-4 border-b z-10">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-800">Επεξήγηση Ροών</h3>
+                <p className="text-sm text-gray-500 mt-1">Σύντομη περιγραφή του αντικειμένου κάθε ροής.</p>
+              </div>
+              <button
+                onClick={() => setShowFlowInfo(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-800"
+              >
+                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="grid gap-4">
+              {Object.entries(FLOW_NAMES).map(([code, name]) => {
+                 if (['M', 'F', 'X', 'K'].includes(code)) return null; // Skip non-flow items
+                 return (
+                   <div key={code} className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
+                      <div className="flex items-center gap-3 mb-2">
+                         <span className="px-2.5 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-md uppercase tracking-wide">{name}</span>
+                         <h4 className="font-bold text-gray-800 text-sm md:text-base">{FLOW_DESCRIPTIONS[code]}</h4>
+                      </div>
+                      <p className="text-sm text-gray-600 leading-relaxed ml-1">
+                        {FLOW_DETAILS[code] || "Δεν υπάρχει διαθέσιμη περιγραφή."}
+                      </p>
+                   </div>
+                 )
+              })}
+            </div>
           </div>
         </div>
       )}
