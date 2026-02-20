@@ -14,13 +14,42 @@ const Step1Strategy: React.FC = () => {
     }
   };
 
+  const getFlowCounts = (flows: Record<string, FlowSelection>) => {
+    const full = Object.values(flows).filter(s => s === 'full').length;
+    const half = Object.values(flows).filter(s => s === 'half').length;
+    return { full, half };
+  };
+
   const cycleFlowSelection = (code: string) => {
     const current = flowSelections[code] || 'none';
     let next: FlowSelection = 'none';
 
+    // Standard Cycle: None -> Half -> Full -> None
     if (current === 'none') next = 'half';
     else if (current === 'half') next = 'full';
     else if (current === 'full') next = 'none';
+
+    // Blocking Logic: Check if next state exceeds limits
+    const { full, half } = getFlowCounts(flowSelections);
+
+    // Limits: Max 3 Full OR Max 4 Total Active (Full + Half)
+
+    if (next === 'full') {
+      if (full >= 3) {
+         // Blocked from Half -> Full.
+         // UX Improvement: Skip to 'none' instead of staying stuck at Half.
+         next = 'none';
+      }
+    }
+
+    if (next === 'half') {
+      // If blocked from None -> Half
+      const totalActive = full + half;
+      if (current === 'none' && totalActive >= 4) {
+         alert('Δεν μπορείτε να επιλέξετε πάνω από 4 Ροές συνολικά.');
+         return;
+      }
+    }
 
     setFlowSelection(code, next);
   };
@@ -52,11 +81,9 @@ const Step1Strategy: React.FC = () => {
     if (part.code !== 'ANY') {
        return flowSelections[part.code] === part.type;
     }
-    // "ANY" logic: Check if we have 'at least half' (or full) of something else?
-    // The VISUAL_RULES definition for 'ANY' is usually '+ Half Other' or '+ Full Other'
-    // This is purely for visual highlighting, strictly matching the validation logic is complex here.
-    // We can approximate: Is there *any* flow not in the rule's explicit parts that matches the type?
-    // For now, let's keep it simple: Don't highlight ANY parts dynamically unless we implement full logic.
+    // Logic for ANY highlighting is simpler now: Do we have "other" flows?
+    // We can just return false for now to avoid complexity in visual highlighting,
+    // or implement a basic check.
     return false;
   };
 

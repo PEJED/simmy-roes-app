@@ -6,26 +6,24 @@ export type FlowSelection = 'none' | 'half' | 'full';
 export interface DirectionRules {
   name: string;
   description: string;
-  // We can't use simple arrays anymore because the logic is complex (OR conditions).
-  // We'll rely on the validate function for the logic.
 }
 
 export const DIRECTION_INFO: Record<Direction, DirectionRules> = {
   Electronics: {
     name: 'Ηλεκτρονικής',
-    description: '(Ολόκληρη Η ΚΑΙ [Ολόκληρη Υ ή Σ] ΚΑΙ [Τουλάχιστον Μισή άλλη]) Ή (Ολόκληρη Η ΚΑΙ Μισή Σ ΚΑΙ [Ολόκληρη Υ ή Τ ή Ζ]) Ή (Μισή Η ΚΑΙ Ολόκληρη Σ ΚΑΙ [Ολόκληρη Λ ή Δ ή Ε]).',
+    description: 'Επιλέξτε έναν από τους 3 συνδυασμούς: α) Ολόκληρη Η + {Ολόκληρη Υ ή Σ} + {τουλάχιστον ½ άλλη}, β) Ολόκληρη Η + Μισή Σ + {Ολόκληρη Υ ή Τ ή Ζ}, γ) Μισή Η + Ολόκληρη Σ + {Ολόκληρη Λ ή Δ ή Ε}.',
   },
   Informatics: {
     name: 'Πληροφορικής',
-    description: '(Ολόκληρη Υ ΚΑΙ Ολόκληρη Λ ΚΑΙ [Τουλάχιστον Μισή άλλη]) Ή (Ολόκληρη Υ ΚΑΙ Μισή Λ ΚΑΙ [Ολόκληρη Δ ή Σ]) Ή (Μισή Υ ΚΑΙ Ολόκληρη Λ ΚΑΙ [Ολόκληρη Δ ή Σ]).',
+    description: 'Επιλέξτε έναν από τους 3 συνδυασμούς: α) Ολόκληρη Υ + Ολόκληρη Λ + {τουλάχιστον ½ άλλη}, β) Ολόκληρη Υ + Μισή Λ + {Ολόκληρη Δ ή Σ}, γ) Μισή Υ + Ολόκληρη Λ + {Ολόκληρη Δ ή Σ}.',
   },
   Communications: {
     name: 'Επικοινωνιών',
-    description: '(Ολόκληρη Τ ΚΑΙ Ολόκληρη Δ ΚΑΙ [Τουλάχιστον Μισή άλλη]) Ή (Ολόκληρη Τ ΚΑΙ Μισή Δ ΚΑΙ [Ολόκληρη Η ή Σ]) Ή (Μισή Τ ΚΑΙ Ολόκληρη Δ ΚΑΙ [Ολόκληρη Υ ή Λ ή Σ]).',
+    description: 'Επιλέξτε έναν από τους 3 συνδυασμούς: α) Ολόκληρη Τ + Ολόκληρη Δ + {τουλάχιστον ½ άλλη}, β) Ολόκληρη Τ + Μισή Δ + {Ολόκληρη Η ή Σ}, γ) Μισή Τ + Ολόκληρη Δ + {Ολόκληρη Υ ή Λ ή Σ}.',
   },
   Energy: {
     name: 'Ενέργειας',
-    description: '(Ολόκληρη Ε ΚΑΙ Ολόκληρη Ζ ΚΑΙ [Τουλάχιστον Μισή άλλη]) Ή (Ολόκληρη Ε ΚΑΙ Μισή Ζ ΚΑΙ [Ολόκληρη Τ ή Δ ή Σ]) Ή (Μισή Ε ΚΑΙ Ολόκληρη Ζ ΚΑΙ [Ολόκληρη Υ ή Η ή Σ]).',
+    description: 'Επιλέξτε έναν από τους 3 συνδυασμούς: α) Ολόκληρη Ε + Ολόκληρη Ζ + {τουλάχιστον ½ άλλη}, β) Ολόκληρη Ε + Μισή Ζ + {Ολόκληρη Τ ή Δ ή Σ}, γ) Μισή Ε + Ολόκληρη Ζ + {Ολόκληρη Υ ή Η ή Σ}.',
   },
 };
 
@@ -64,12 +62,38 @@ const isFull = (flows: Record<string, FlowSelection>, code: string) => flows[cod
 // Helper: Check if flow is 'half'
 const isHalf = (flows: Record<string, FlowSelection>, code: string) => flows[code] === 'half';
 
-// Helper: Check "At least half other flow"
-// "Other" means flows NOT in the exclude list.
-const hasHalfOther = (flows: Record<string, FlowSelection>, excludeCodes: string[]) => {
-  return Object.entries(flows).some(([code, selection]) => {
-    return !excludeCodes.includes(code) && (selection === 'half' || selection === 'full');
+// Helper: Check specific condition for "Other" flows (excluding main ones)
+// Returns true if the remaining flows match one of the 3 sub-options for "{at least 1/2 other}"
+const checkAtLeastHalfOther = (flows: Record<string, FlowSelection>, excludeCodes: string[]) => {
+  const otherFlows = Object.entries(flows).filter(([code, selection]) => {
+    return !excludeCodes.includes(code) && selection !== 'none';
   });
+
+  const fullCount = otherFlows.filter(([, s]) => s === 'full').length;
+  const halfCount = otherFlows.filter(([, s]) => s === 'half').length;
+
+  // Option 1: 1 Full (+ 2 Free - handled in Step 2)
+  if (fullCount === 1 && halfCount === 0) return true;
+
+  // Option 2: 1 Half (+ 5 Free - handled in Step 2)
+  if (fullCount === 0 && halfCount === 1) return true;
+
+  // Option 3: 2 Half (+ 1 Free - handled in Step 2)
+  if (fullCount === 0 && halfCount === 2) return true;
+
+  return false;
+};
+
+// Helper: Check specific condition for "Full Other" (exactly 1 Full other)
+const checkFullOther = (flows: Record<string, FlowSelection>, excludeCodes: string[], allowedCodes: string[]) => {
+  const otherFlows = Object.entries(flows).filter(([code, selection]) => {
+    return !excludeCodes.includes(code) && selection !== 'none';
+  });
+
+  if (otherFlows.length !== 1) return false;
+  const [code, selection] = otherFlows[0];
+
+  return selection === 'full' && allowedCodes.includes(code);
 };
 
 export function validateDirectionSelection(
@@ -80,57 +104,83 @@ export function validateDirectionSelection(
     return { isValid: false, error: 'Παρακαλώ επιλέξτε Κατεύθυνση.' };
   }
 
-  // Implementation of specific logical rules
-  // Returns true if ANY of the OR conditions are met.
-
   switch (direction) {
     case 'Electronics':
-      // (Full H AND [Full Y OR Full S] AND [Half Other])
-      // OR (Full H AND Half S AND [Full Y OR Full T OR Full Z])
-      // OR (Half H AND Full S AND [Full L OR Full D OR Full E])
+      // a) Full H + {Full Y OR Full S} + {at least 1/2 other}
+      if (isFull(flows, 'H')) {
+        if (isFull(flows, 'Y') && !isFull(flows, 'S')) { // H + Y + Others
+           if (checkAtLeastHalfOther(flows, ['H', 'Y'])) return { isValid: true, error: null };
+        }
+        if (isFull(flows, 'S') && !isFull(flows, 'Y')) { // H + S + Others
+           if (checkAtLeastHalfOther(flows, ['H', 'S'])) return { isValid: true, error: null };
+        }
+      }
 
-      const el_c1 = isFull(flows, 'H') && (isFull(flows, 'Y') || isFull(flows, 'S')) && hasHalfOther(flows, ['H', 'Y', 'S']);
-      const el_c2 = isFull(flows, 'H') && isHalf(flows, 'S') && (isFull(flows, 'Y') || isFull(flows, 'T') || isFull(flows, 'Z'));
-      const el_c3 = isHalf(flows, 'H') && isFull(flows, 'S') && (isFull(flows, 'L') || isFull(flows, 'D') || isFull(flows, 'E'));
+      // b) Full H + Half S + {Full Y OR Full T OR Full Z}
+      if (isFull(flows, 'H') && isHalf(flows, 'S')) {
+         if (checkFullOther(flows, ['H', 'S'], ['Y', 'T', 'Z'])) return { isValid: true, error: null };
+      }
 
-      if (el_c1 || el_c2 || el_c3) return { isValid: true, error: null };
-      return { isValid: false, error: 'Δεν πληρούνται οι κανόνες της Ηλεκτρονικής. Δείτε τις οδηγίες.' };
+      // c) Half H + Full S + {Full L OR Full D OR Full E}
+      if (isHalf(flows, 'H') && isFull(flows, 'S')) {
+         if (checkFullOther(flows, ['H', 'S'], ['L', 'D', 'E'])) return { isValid: true, error: null };
+      }
+
+      return { isValid: false, error: 'Δεν πληρούνται οι κανόνες της Ηλεκτρονικής.' };
 
     case 'Informatics':
-      // (Full Y AND Full L AND [Half Other])
-      // OR (Full Y AND Half L AND [Full D OR Full S])
-      // OR (Half Y AND Full L AND [Full D OR Full S])
+      // a) Full Y + Full L + {at least 1/2 other}
+      if (isFull(flows, 'Y') && isFull(flows, 'L')) {
+         if (checkAtLeastHalfOther(flows, ['Y', 'L'])) return { isValid: true, error: null };
+      }
 
-      const in_c1 = isFull(flows, 'Y') && isFull(flows, 'L') && hasHalfOther(flows, ['Y', 'L']);
-      const in_c2 = isFull(flows, 'Y') && isHalf(flows, 'L') && (isFull(flows, 'D') || isFull(flows, 'S'));
-      const in_c3 = isHalf(flows, 'Y') && isFull(flows, 'L') && (isFull(flows, 'D') || isFull(flows, 'S'));
+      // b) Full Y + Half L + {Full D OR Full S}
+      if (isFull(flows, 'Y') && isHalf(flows, 'L')) {
+         if (checkFullOther(flows, ['Y', 'L'], ['D', 'S'])) return { isValid: true, error: null };
+      }
 
-      if (in_c1 || in_c2 || in_c3) return { isValid: true, error: null };
-      return { isValid: false, error: 'Δεν πληρούνται οι κανόνες της Πληροφορικής. Δείτε τις οδηγίες.' };
+      // c) Half Y + Full L + {Full D OR Full S}
+      if (isHalf(flows, 'Y') && isFull(flows, 'L')) {
+         if (checkFullOther(flows, ['Y', 'L'], ['D', 'S'])) return { isValid: true, error: null };
+      }
+
+      return { isValid: false, error: 'Δεν πληρούνται οι κανόνες της Πληροφορικής.' };
 
     case 'Communications':
-      // (Full T AND Full D AND [Half Other])
-      // OR (Full T AND Half D AND [Full H OR Full S])
-      // OR (Half T AND Full D AND [Full Y OR Full L OR Full S])
+      // a) Full T + Full D + {at least 1/2 other}
+      if (isFull(flows, 'T') && isFull(flows, 'D')) {
+         if (checkAtLeastHalfOther(flows, ['T', 'D'])) return { isValid: true, error: null };
+      }
 
-      const co_c1 = isFull(flows, 'T') && isFull(flows, 'D') && hasHalfOther(flows, ['T', 'D']);
-      const co_c2 = isFull(flows, 'T') && isHalf(flows, 'D') && (isFull(flows, 'H') || isFull(flows, 'S'));
-      const co_c3 = isHalf(flows, 'T') && isFull(flows, 'D') && (isFull(flows, 'Y') || isFull(flows, 'L') || isFull(flows, 'S'));
+      // b) Full T + Half D + {Full H OR Full S}
+      if (isFull(flows, 'T') && isHalf(flows, 'D')) {
+         if (checkFullOther(flows, ['T', 'D'], ['H', 'S'])) return { isValid: true, error: null };
+      }
 
-      if (co_c1 || co_c2 || co_c3) return { isValid: true, error: null };
-      return { isValid: false, error: 'Δεν πληρούνται οι κανόνες των Επικοινωνιών. Δείτε τις οδηγίες.' };
+      // c) Half T + Full D + {Full Y OR Full L OR Full S}
+      if (isHalf(flows, 'T') && isFull(flows, 'D')) {
+         if (checkFullOther(flows, ['T', 'D'], ['Y', 'L', 'S'])) return { isValid: true, error: null };
+      }
+
+      return { isValid: false, error: 'Δεν πληρούνται οι κανόνες των Επικοινωνιών.' };
 
     case 'Energy':
-      // (Full E AND Full Z AND [Half Other])
-      // OR (Full E AND Half Z AND [Full T OR Full D OR Full S])
-      // OR (Half E AND Full Z AND [Full Y OR Full H OR Full S])
+      // a) Full E + Full Z + {at least 1/2 other}
+      if (isFull(flows, 'E') && isFull(flows, 'Z')) {
+         if (checkAtLeastHalfOther(flows, ['E', 'Z'])) return { isValid: true, error: null };
+      }
 
-      const en_c1 = isFull(flows, 'E') && isFull(flows, 'Z') && hasHalfOther(flows, ['E', 'Z']);
-      const en_c2 = isFull(flows, 'E') && isHalf(flows, 'Z') && (isFull(flows, 'T') || isFull(flows, 'D') || isFull(flows, 'S'));
-      const en_c3 = isHalf(flows, 'E') && isFull(flows, 'Z') && (isFull(flows, 'Y') || isFull(flows, 'H') || isFull(flows, 'S'));
+      // b) Full E + Half Z + {Full T OR Full D OR Full S}
+      if (isFull(flows, 'E') && isHalf(flows, 'Z')) {
+         if (checkFullOther(flows, ['E', 'Z'], ['T', 'D', 'S'])) return { isValid: true, error: null };
+      }
 
-      if (en_c1 || en_c2 || en_c3) return { isValid: true, error: null };
-      return { isValid: false, error: 'Δεν πληρούνται οι κανόνες της Ενέργειας. Δείτε τις οδηγίες.' };
+      // c) Half E + Full Z + {Full Y OR Full H OR Full S}
+      if (isHalf(flows, 'E') && isFull(flows, 'Z')) {
+         if (checkFullOther(flows, ['E', 'Z'], ['Y', 'H', 'S'])) return { isValid: true, error: null };
+      }
+
+      return { isValid: false, error: 'Δεν πληρούνται οι κανόνες της Ενέργειας.' };
 
     default:
       return { isValid: false, error: 'Άγνωστη Κατεύθυνση.' };
