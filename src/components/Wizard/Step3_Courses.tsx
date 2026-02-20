@@ -3,9 +3,10 @@ import { useWizard } from '../../context/WizardContext';
 import { courses } from '../../data/courses';
 import CourseCard from '../CourseCard';
 import { FLOW_NAMES } from '../../utils/flowValidation';
+import { validateSelection, type Direction as RuleDirection } from '../../utils/ruleEngine';
 
 const Step3Courses: React.FC = () => {
-  const { flowSelections, selectedCourseIds, toggleCourse, setStep } = useWizard();
+  const { direction, flowSelections, selectedCourseIds, toggleCourse, setStep } = useWizard();
   const [activeTab, setActiveTab] = useState<'main' | 'free'>('main');
 
   // Filter courses based on flow selections
@@ -77,7 +78,16 @@ const Step3Courses: React.FC = () => {
     return status;
   }, [flowSelections, selectedCourseIds]);
 
-  const isComplete = Object.values(validationStatus).every(s => s.total >= s.targetTotal && s.compulsory >= s.targetCompulsory);
+  // General Rules Validation
+  const generalWarnings = useMemo(() => {
+    const selected = courses.filter(c => selectedCourseIds.includes(String(c.id)));
+    // Map Direction format (Capitalized) to RuleDirection (lowercase)
+    const ruleDirection = direction ? direction.toLowerCase() as RuleDirection : null;
+    return validateSelection(selected, ruleDirection);
+  }, [selectedCourseIds, direction]);
+
+  const isFlowsComplete = Object.values(validationStatus).every(s => s.total >= s.targetTotal && s.compulsory >= s.targetCompulsory);
+  const isComplete = isFlowsComplete && generalWarnings.length === 0;
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
@@ -120,6 +130,20 @@ const Step3Courses: React.FC = () => {
             );
           })}
         </div>
+
+        {generalWarnings.length > 0 && (
+          <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-xl">
+             <h4 className="font-bold text-orange-800 mb-2 text-sm flex items-center gap-2">
+               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+               Εκκρεμότητες
+             </h4>
+             <ul className="text-xs text-orange-700 space-y-1 list-disc list-inside">
+               {generalWarnings.map((w, idx) => (
+                 <li key={idx}>{w}</li>
+               ))}
+             </ul>
+          </div>
+        )}
 
         <div className="mt-8 pt-6 border-t border-gray-100">
            <div className="text-sm text-gray-500 mb-4">
