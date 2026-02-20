@@ -1,6 +1,7 @@
 import type { Course } from '../types/Course';
 
 export const courses: Course[] = [
+    // --- Semester 6 ---
     {
         id: 1,
         title: "Λειτουργικά Συστήματα",
@@ -9,47 +10,8 @@ export const courses: Course[] = [
         flow_code: "Y",
         ects: 6,
         type: 'compulsory',
-        description: "Εισαγωγή στα λειτουργικά συστήματα. Διεργασίες, νήματα, χρονοδρομολόγηση, συγχρονισμός, αδιέξοδα. Διαχείριση μνήμης, εικονική μνήμη. Συστήματα αρχείων, είσοδος/έξοδος."
-    },
-    {
-        id: 2,
-        title: "Ηλεκτρομαγνητικά Πεδία Α",
-        semester: 4,
-        flow: "Κορμός",
-        flow_code: "K",
-        ects: 5,
-        type: 'compulsory',
-        description: "Στατικός ηλεκτρισμός, Νόμος Coulomb, Ηλεκτρικό πεδίο, Δυναμικό, Εξίσωση Poisson και Laplace. Διηλεκτρικά υλικά. Σταθερό ηλεκτρικό ρεύμα. Στατικό μαγνητικό πεδίο, Νόμος Biot-Savart, Νόμος Ampere."
-    },
-    {
-        id: 3,
-        title: "Σήματα και Συστήματα",
-        semester: 3,
-        flow: "Κορμός",
-        flow_code: "K",
-        ects: 6,
-        type: 'compulsory',
-        description: "Συνεχή και διακριτά σήματα. Γραμμικά Χρονικά Αμετάβλητα (ΓΧΑ) συστήματα. Συνέλιξη. Σειρές Fourier, Μετασχηματισμός Fourier, Μετασχηματισμός Laplace, Μετασχηματισμός Ζ."
-    },
-    {
-        id: 4,
-        title: "Δίκτυα Υπολογιστών",
-        semester: 7,
-        flow: "Υπολογιστές",
-        flow_code: "Y",
-        ects: 7,
-        type: 'compulsory', // Often compulsory for flow Y
-        description: "Εισαγωγή στα δίκτυα υπολογιστών. Μοντέλο OSI και TCP/IP. Επίπεδο Εφαρμογής (HTTP, DNS). Επίπεδο Μεταφοράς (TCP, UDP). Επίπεδο Δικτύου (IP, δρομολόγηση). Επίπεδο Ζεύξης Δεδομένων."
-    },
-    {
-        id: 5,
-        title: "Ηλεκτρονική Ι",
-        semester: 5,
-        flow: "Ηλεκτρονική",
-        flow_code: "H",
-        ects: 6,
-        type: 'compulsory',
-        description: "Φυσική ημιαγωγών. Δίοδοι επαφής pn. Κυκλώματα με διόδους. Διπολικά τρανζίστορ επαφής (BJT) και τρανζίστορ επίδρασης πεδίου (FET). Ενισχυτές μικρών σημάτων."
+        is_flow_compulsory: true,
+        description: "Εισαγωγή στα λειτουργικά συστήματα."
     },
     {
         id: 6,
@@ -59,9 +21,9 @@ export const courses: Course[] = [
         flow_code: "E",
         ects: 7,
         type: 'compulsory',
-        description: "Παραγωγή, μεταφορά και διανομή ηλεκτρικής ενέργειας. Μοντέλα γραμμών μεταφοράς. Ροή φορτίου. Έλεγχος τάσης και συχνότητας. Οικονομική λειτουργία συστημάτων ηλεκτρικής ενέργειας."
+        is_flow_compulsory: true,
+        description: "Παραγωγή, μεταφορά και διανομή."
     },
-    // New courses to help test validation rules
     {
         id: 7,
         title: "Τεχνολογία Λογισμικού",
@@ -70,7 +32,8 @@ export const courses: Course[] = [
         flow_code: "L",
         ects: 6,
         type: 'compulsory',
-        description: "Διαδικασίες ανάπτυξης λογισμικού, απαιτήσεις, σχεδίαση, υλοποίηση, έλεγχος. Αντικειμενοστραφής ανάλυση και σχεδίαση με UML."
+        is_flow_compulsory: true,
+        description: "Διαδικασίες ανάπτυξης λογισμικού."
     },
     {
         id: 8,
@@ -80,8 +43,44 @@ export const courses: Course[] = [
         flow_code: "T",
         ects: 6,
         type: 'compulsory',
-        description: "Εισαγωγή στα τηλεπικοινωνιακά συστήματα. Αναλογική και ψηφιακή μετάδοση. Διαμόρφωση πλάτους, συχνότητας, φάσης."
+        is_flow_compulsory: true,
+        description: "Εισαγωγή στα τηλεπικοινωνιακά συστήματα."
     },
+    // --- Semester 7 ---
+    {
+        id: 4,
+        title: "Δίκτυα Υπολογιστών",
+        semester: 7,
+        flow: "Υπολογιστές",
+        flow_code: "Y",
+        ects: 7,
+        type: 'compulsory',
+        is_flow_compulsory: true,
+        description: "Εισαγωγή στα δίκτυα υπολογιστών."
+    },
+    {
+        id: 12,
+        title: "Ψηφιακή Επεξεργασία Σήματος",
+        semester: 7,
+        flow: "Σήματα",
+        flow_code: "Z",
+        ects: 6,
+        type: 'compulsory',
+        is_flow_compulsory: true,
+        description: "Δειγματοληψία, μετασχηματισμοί Z και Fourier."
+    },
+    {
+        id: 13,
+        title: "Εισαγωγή στη Βιοϊατρική Τεχνολογία",
+        semester: 7,
+        flow: "Ιατρική",
+        flow_code: "I",
+        ects: 5,
+        type: 'compulsory',
+        is_flow_compulsory: true,
+        description: "Αρχές βιοϊατρικής τεχνολογίας."
+    },
+    // --- Semester 8 ---
     {
         id: 9,
         title: "Φιλοσοφία της Επιστήμης",
@@ -90,7 +89,7 @@ export const courses: Course[] = [
         flow_code: "X",
         ects: 3,
         type: 'humanities',
-        description: "Επιστημολογία, μεθοδολογία της επιστήμης, ιστορική εξέλιξη των επιστημονικών θεωριών."
+        description: "Επιστημολογία."
     },
     {
         id: 10,
@@ -100,16 +99,38 @@ export const courses: Course[] = [
         flow_code: "X",
         ects: 3,
         type: 'humanities',
-        description: "Επισκόπηση της ιστορίας της τέχνης από την αρχαιότητα έως σήμερα."
+        description: "Επισκόπηση της ιστορίας της τέχνης."
     },
+    // --- Semester 9 ---
     {
         id: 11,
-        title: "Ελεύθερο Μάθημα 1",
+        title: "Ειδικά Θέματα Μαθηματικών",
         semester: 9,
-        flow: "Ελεύθερο",
-        flow_code: "X",
+        flow: "Μαθηματικά",
+        flow_code: "M",
         ects: 4,
         type: 'free',
-        description: "Δοκιμαστικό ελεύθερο μάθημα για έλεγχο κανόνων."
+        description: "Προχωρημένα μαθηματικά."
+    },
+    {
+        id: 14,
+        title: "Κβαντομηχανική",
+        semester: 9,
+        flow: "Φυσική",
+        flow_code: "F",
+        ects: 4,
+        type: 'free',
+        description: "Αρχές κβαντομηχανικής."
+    },
+    {
+        id: 15,
+        title: "Διοίκηση Επιχειρήσεων",
+        semester: 9,
+        flow: "Οικονομία",
+        flow_code: "O",
+        ects: 4,
+        type: 'compulsory',
+        is_flow_compulsory: true,
+        description: "Αρχές διοίκησης."
     }
 ];
