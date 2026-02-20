@@ -63,8 +63,6 @@ export const FLOW_DESCRIPTIONS: Record<string, string> = {
 const isFull = (flows: Record<string, FlowSelection>, code: string) => flows[code] === 'full';
 // Helper: Check if flow is 'half'
 const isHalf = (flows: Record<string, FlowSelection>, code: string) => flows[code] === 'half';
-// Helper: Check if flow is 'half' or 'full' (at least half)
-const isAtLeastHalf = (flows: Record<string, FlowSelection>, code: string) => flows[code] === 'half' || flows[code] === 'full';
 
 // Helper: Check "At least half other flow"
 // "Other" means flows NOT in the exclude list.
