@@ -9,6 +9,7 @@ export const courses: Course[] = [
         flow_code: "Y",
         ects: 6,
         type: 'compulsory',
+        is_flow_compulsory: true,
         description: "Εισαγωγή στα λειτουργικά συστήματα. Διεργασίες, νήματα, χρονοδρομολόγηση, συγχρονισμός, αδιέξοδα. Διαχείριση μνήμης, εικονική μνήμη. Συστήματα αρχείων, είσοδος/έξοδος."
     },
     {
@@ -39,6 +40,7 @@ export const courses: Course[] = [
         flow_code: "Y",
         ects: 7,
         type: 'compulsory', // Often compulsory for flow Y
+        is_flow_compulsory: true,
         description: "Εισαγωγή στα δίκτυα υπολογιστών. Μοντέλο OSI και TCP/IP. Επίπεδο Εφαρμογής (HTTP, DNS). Επίπεδο Μεταφοράς (TCP, UDP). Επίπεδο Δικτύου (IP, δρομολόγηση). Επίπεδο Ζεύξης Δεδομένων."
     },
     {
@@ -49,6 +51,7 @@ export const courses: Course[] = [
         flow_code: "H",
         ects: 6,
         type: 'compulsory',
+        is_flow_compulsory: true,
         description: "Φυσική ημιαγωγών. Δίοδοι επαφής pn. Κυκλώματα με διόδους. Διπολικά τρανζίστορ επαφής (BJT) και τρανζίστορ επίδρασης πεδίου (FET). Ενισχυτές μικρών σημάτων."
     },
     {
@@ -59,6 +62,7 @@ export const courses: Course[] = [
         flow_code: "E",
         ects: 7,
         type: 'compulsory',
+        is_flow_compulsory: true,
         description: "Παραγωγή, μεταφορά και διανομή ηλεκτρικής ενέργειας. Μοντέλα γραμμών μεταφοράς. Ροή φορτίου. Έλεγχος τάσης και συχνότητας. Οικονομική λειτουργία συστημάτων ηλεκτρικής ενέργειας."
     },
     // New courses to help test validation rules
@@ -70,6 +74,7 @@ export const courses: Course[] = [
         flow_code: "L",
         ects: 6,
         type: 'compulsory',
+        is_flow_compulsory: true,
         description: "Διαδικασίες ανάπτυξης λογισμικού, απαιτήσεις, σχεδίαση, υλοποίηση, έλεγχος. Αντικειμενοστραφής ανάλυση και σχεδίαση με UML."
     },
     {
@@ -80,6 +85,7 @@ export const courses: Course[] = [
         flow_code: "T",
         ects: 6,
         type: 'compulsory',
+        is_flow_compulsory: true,
         description: "Εισαγωγή στα τηλεπικοινωνιακά συστήματα. Αναλογική και ψηφιακή μετάδοση. Διαμόρφωση πλάτους, συχνότητας, φάσης."
     },
     {
