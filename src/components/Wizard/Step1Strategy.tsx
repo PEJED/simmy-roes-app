@@ -1,14 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useWizard } from '../../context/WizardContext';
-import { Direction, DIRECTION_RULES, FLOW_NAMES } from '../../utils/flowValidation';
+import { DIRECTION_RULES, FLOW_NAMES } from '../../utils/flowValidation';
+import type { Direction } from '../../utils/flowValidation';
 
 const Step1Strategy: React.FC = () => {
   const { direction, setDirection, flowSelections, setFlowSelection, validation, setStep } = useWizard();
-
-  // Local error state to only show error after they try to proceed or interact
-  // But requirement says "If selection doesn't meet rule... button disabled and red message".
-  // So we show it always if invalid? Or only when direction is selected.
-  // Validation object comes from context and is re-calculated.
 
   const handleNext = () => {
     if (validation.isValid) {

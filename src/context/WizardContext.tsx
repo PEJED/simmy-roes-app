@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
-import { validateDirectionSelection, FlowSelection, Direction } from '../utils/flowValidation';
+import { validateDirectionSelection } from '../utils/flowValidation';
+import type { FlowSelection, Direction } from '../utils/flowValidation';
 
 interface WizardState {
   step: number;
