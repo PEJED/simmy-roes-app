@@ -1,7 +1,9 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useWizard } from '../../context/WizardContext';
-import { DIRECTION_INFO, FLOW_NAMES, FLOW_DESCRIPTIONS, FlowSelection } from '../../utils/flowValidation';
-import { FLOW_GREEK_LETTERS, VISUAL_RULES, RuleOption } from '../../utils/visualRules';
+import { DIRECTION_INFO, FLOW_NAMES, FLOW_DESCRIPTIONS } from '../../utils/flowValidation';
+import type { FlowSelection } from '../../utils/flowValidation';
+import { FLOW_GREEK_LETTERS, VISUAL_RULES } from '../../utils/visualRules';
+import type { RuleOption } from '../../utils/visualRules';
 
 const Step1Strategy: React.FC = () => {
   const { direction, setDirection, flowSelections, setFlowSelection, validation, setStep } = useWizard();
