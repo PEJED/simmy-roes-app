@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useWizard } from '../../context/WizardContext';
 import { COMBINATIONS, type Combination } from '../../data/combinations';
 import { FLOW_NAMES, type FlowSelection } from '../../utils/flowValidation';
@@ -34,9 +34,6 @@ const Step2Flows: React.FC = () => {
   };
 
   const currentComb = combinations.find(c => c.id === selectedCombinationId);
-
-  // Helper to check if a flow is already selected as full or half
-  const isSelected = (code: string) => flowSelections[code] && flowSelections[code] !== 'none';
 
   // Get available flows for the "Other" selection
   const getAvailableFlows = (comb: Combination) => {
