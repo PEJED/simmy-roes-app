@@ -5,6 +5,7 @@ import type { FlowSelection, Direction } from '../utils/flowValidation';
 interface WizardState {
   step: number;
   direction: Direction | null;
+  selectedCombinationId: string | null;
   flowSelections: Record<string, FlowSelection>; // e.g. { 'Y': 'full', 'L': 'half' }
   selectedCourseIds: string[];
 }
@@ -12,7 +13,9 @@ interface WizardState {
 interface WizardContextType extends WizardState {
   setStep: (step: number) => void;
   setDirection: (direction: Direction) => void;
+  setSelectedCombinationId: (id: string | null) => void;
   setFlowSelection: (flowCode: string, selection: FlowSelection) => void;
+  resetFlowSelections: () => void;
   toggleCourse: (courseId: string) => void;
   validation: { isValid: boolean; error: string | null };
 }
@@ -22,6 +25,7 @@ const WizardContext = createContext<WizardContextType | undefined>(undefined);
 export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState<Direction | null>(null);
+  const [selectedCombinationId, setSelectedCombinationId] = useState<string | null>(null);
   const [flowSelections, setFlowSelections] = useState<Record<string, FlowSelection>>({});
   const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
 
@@ -41,6 +45,10 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }));
   };
 
+  const resetFlowSelections = () => {
+    setFlowSelections({});
+  };
+
   const toggleCourse = (courseId: string) => {
     setSelectedCourseIds(prev =>
       prev.includes(courseId)
@@ -52,11 +60,14 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const value = {
     step,
     direction,
+    selectedCombinationId,
     flowSelections,
     selectedCourseIds,
     setStep,
     setDirection,
+    setSelectedCombinationId,
     setFlowSelection,
+    resetFlowSelections,
     toggleCourse,
     validation
   };
