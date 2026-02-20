@@ -1,4 +1,4 @@
-import { FlowSelection } from './flowValidation';
+import type { FlowSelection } from './flowValidation';
 
 export const FLOW_GREEK_LETTERS: Record<string, string> = {
   'Y': 'Υ',
