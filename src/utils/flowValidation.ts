@@ -28,18 +28,18 @@ export const DIRECTION_INFO: Record<Direction, DirectionRules> = {
 };
 
 export const FLOW_NAMES: Record<string, string> = {
-  'Y': 'Υπολογιστές',
-  'L': 'Λογισμικό',
-  'D': 'Δίκτυα',
-  'H': 'Ηλεκτρονική',
-  'T': 'Τηλεπικοινωνίες',
-  'S': 'Συστήματα',
-  'E': 'Ενέργεια',
-  'Z': 'Σήματα',
-  'O': 'Οικονομία',
-  'I': 'Ιατρική',
-  'M': 'Μαθηματικά',
-  'F': 'Φυσική'
+  'Y': 'Ροή Υ',
+  'L': 'Ροή Λ',
+  'D': 'Ροή Δ',
+  'H': 'Ροή Η',
+  'T': 'Ροή Τ',
+  'S': 'Ροή Σ',
+  'E': 'Ροή Ε',
+  'Z': 'Ροή Ζ',
+  'O': 'Ροή Ο',
+  'I': 'Ροή Ι',
+  'M': 'Ροή Μ',
+  'F': 'Ροή Φ'
 };
 
 export const FLOW_DESCRIPTIONS: Record<string, string> = {

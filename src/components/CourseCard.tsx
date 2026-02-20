@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Course } from '../types/Course';
+import { FLOW_NAMES } from '../utils/flowValidation';
 
 interface CourseCardProps {
   course: Course;
@@ -10,21 +11,31 @@ interface CourseCardProps {
 const CourseCard: React.FC<CourseCardProps> = ({ course, isSelected, onToggle }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Determine flow badge color
+  // Determine flow badge color based on flow_code
   const flowColors: Record<string, string> = {
-    'Κορμός': 'bg-gray-100 text-gray-800',
-    'Υπολογιστές': 'bg-blue-100 text-blue-800',
-    'Λογισμικό': 'bg-green-100 text-green-800',
-    'Δίκτυα': 'bg-purple-100 text-purple-800',
-    'Ηλεκτρονική': 'bg-yellow-100 text-yellow-800',
-    'Τηλεπικοινωνίες': 'bg-indigo-100 text-indigo-800',
-    'Ενέργεια': 'bg-red-100 text-red-800',
-    'Συστήματα': 'bg-orange-100 text-orange-800',
-    'Ανθρωπιστικά': 'bg-pink-100 text-pink-800',
-    'Ελεύθερο': 'bg-teal-100 text-teal-800'
+    'K': 'bg-gray-100 text-gray-800', // Core
+    'Y': 'bg-blue-100 text-blue-800',
+    'L': 'bg-green-100 text-green-800',
+    'D': 'bg-purple-100 text-purple-800',
+    'H': 'bg-yellow-100 text-yellow-800',
+    'T': 'bg-indigo-100 text-indigo-800',
+    'E': 'bg-red-100 text-red-800',
+    'Z': 'bg-orange-100 text-orange-800', // Signals
+    'S': 'bg-pink-100 text-pink-800', // Systems
+    'X': 'bg-rose-100 text-rose-800', // Humanities
+    'F': 'bg-cyan-100 text-cyan-800', // Physics
+    'M': 'bg-teal-100 text-teal-800', // Math
+    'I': 'bg-emerald-100 text-emerald-800', // Bio
+    'O': 'bg-lime-100 text-lime-800', // Econ
   };
 
-  const badgeColor = flowColors[course.flow] || 'bg-gray-100 text-gray-600';
+  const badgeColor = (course.flow_code && flowColors[course.flow_code]) || 'bg-gray-100 text-gray-600';
+
+  // Determine display name
+  let flowDisplayName = course.flow;
+  if (course.flow_code && FLOW_NAMES[course.flow_code]) {
+      flowDisplayName = FLOW_NAMES[course.flow_code];
+  }
 
   return (
     <div
@@ -39,7 +50,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, isSelected, onToggle })
             {course.title}
           </h3>
           <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap ${badgeColor}`}>
-            {course.flow}
+            {flowDisplayName}
           </span>
         </div>
 
