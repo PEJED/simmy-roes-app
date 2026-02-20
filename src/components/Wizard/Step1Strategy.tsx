@@ -1,6 +1,7 @@
 import React from 'react';
 import { useWizard } from '../../context/WizardContext';
-import { Direction, DIRECTION_INFO, FLOW_NAMES, FLOW_DESCRIPTIONS, FlowSelection } from '../../utils/flowValidation';
+import { DIRECTION_INFO, FLOW_NAMES, FLOW_DESCRIPTIONS } from '../../utils/flowValidation';
+import type { Direction, FlowSelection } from '../../utils/flowValidation';
 
 const Step1Strategy: React.FC = () => {
   const { direction, setDirection, flowSelections, setFlowSelection, validation, setStep } = useWizard();
