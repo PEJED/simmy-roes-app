@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Course } from '../types/Course';
+import type { Course } from '../types/Course';
 
 interface CourseCardProps {
   course: Course;
@@ -73,10 +73,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, isSelected, onToggle })
         </div>
       )}
 
-      {/* Action Button (Always visible at bottom or integrated?)
-          Request says: "Inside the card (constantly visible) there must be the button".
-          Let's put it at the bottom outside the accordion part so it's always there.
-      */}
+      {/* Action Button (Always visible at bottom) */}
       <div className="p-3 bg-gray-50 rounded-b-xl border-t border-gray-100 flex justify-end">
         <button
           onClick={(e) => {

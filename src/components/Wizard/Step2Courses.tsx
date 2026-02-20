@@ -2,28 +2,18 @@ import React, { useMemo } from 'react';
 import { useWizard } from '../../context/WizardContext';
 import { courses } from '../../data/courses';
 import CourseCard from '../CourseCard';
-import { Course } from '../../types/Course';
+import type { Course } from '../../types/Course';
 
 const Step2Courses: React.FC = () => {
   const { flowSelections, selectedCourseIds, toggleCourse, setStep } = useWizard();
 
   // Filter courses based on flow selections
   const availableCourses = useMemo(() => {
-    // We assume courses from mock data have 'flow_code' or we derive it from 'flow' string
-    // The previous implementation added flow_code to the Course type.
-
     return courses.filter((course) => {
-      // Logic:
-      // - Include Core courses? Usually yes.
-      // - Include Free courses? Yes.
-      // - Include Humanities? Yes.
-      // - If course has a flow_code, check if that flow is selected as 'half' or 'full'.
-
       if (course.type === 'compulsory' || course.type === 'humanities' || course.type === 'free') {
         return true;
       }
 
-      // If it's a flow course (elective/compulsory within flow)
       if (course.flow_code) {
         const selection = flowSelections[course.flow_code];
         return selection === 'half' || selection === 'full';
@@ -34,7 +24,9 @@ const Step2Courses: React.FC = () => {
   }, [flowSelections]);
 
   const handleToggle = (course: Course) => {
-    toggleCourse(course.id);
+    // Course.id is usually a number in mock data but context uses string[]
+    // Convert to string for consistency
+    toggleCourse(String(course.id));
   };
 
   return (
@@ -63,7 +55,7 @@ const Step2Courses: React.FC = () => {
             <CourseCard
               key={course.id}
               course={course}
-              isSelected={selectedCourseIds.includes(course.id)}
+              isSelected={selectedCourseIds.includes(String(course.id))}
               onToggle={handleToggle}
             />
           ))
