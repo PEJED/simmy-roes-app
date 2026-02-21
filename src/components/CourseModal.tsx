@@ -26,12 +26,12 @@ const CourseModal: React.FC<CourseModalProps> = ({ course, isOpen, onClose }) =>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="absolute inset-0 bg-black/20 backdrop-blur-md transition-opacity"
         onClick={onClose}
       ></div>
 
       {/* Modal Content */}
-      <div className="relative bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col animate-scale-in">
+      <div className="relative bg-white rounded-3xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col animate-scale-in">
 
         {/* Header */}
         <div className="p-6 border-b border-gray-100 flex justify-between items-start sticky top-0 bg-white z-10">
