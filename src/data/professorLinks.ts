@@ -1,0 +1,18 @@
+export const professorLinks: Record<string, string> = {
+    "Α. Βουλόδημος": "https://www.ece.ntua.gr/el/staff/personalPage/c303054f-5e76-4504-92c6-cc0e1e533abb",
+    "Γ. Γκούμας": "https://www.ece.ntua.gr/el/staff/personalPage/b7ff15c5-6195-4a93-bcaf-ea73f08fe2ba",
+    "Γ. Παναγόπουλος": "https://www.ece.ntua.gr/el/staff/personalPage/9e5f28c2-f46a-4928-a22f-3a50940b93bb",
+    "Γ. Σιόλας": "https://www.ece.ntua.gr/el/staff/personalPage/17bd272c-38cf-4e67-be00-5bf3a54a36c1",
+    "Γ. Στάμου": "https://www.ece.ntua.gr/el/staff/personalPage/47402625-ecdc-4b1c-948a-6b4963cffd98",
+    "Δ. Πνευματικάτος": "https://www.ece.ntua.gr/el/staff/personalPage/5e06fdaf-70ac-4123-b9e9-fde8016fa58f",
+    "Δ. Σούντρης": "https://www.ece.ntua.gr/el/staff/personalPage/467d0674-1d24-446d-b73c-048b2118381e",
+    "Ε. Βαρβαρίγος": "https://www.ece.ntua.gr/el/staff/personalPage/e709ccbf-d0ec-4e02-afe5-59ed411ab568",
+    "Ι. Παναγοδήμος": "https://www.ece.ntua.gr/el/staff/personalPage/6eb0674e-9e10-11f0-9690-0242ac110004",
+    "Κ. Νίκας": "https://www.ece.ntua.gr/el/staff/personalPage/6eb14143-9e10-11f0-9690-0242ac110004",
+    "Μ. Κόνιαρης": "https://www.ece.ntua.gr/el/staff/personalPage/98dc597f-1d1a-4310-9623-d519bd7fb975",
+    "Ν. Κοζύρης": "https://www.ece.ntua.gr/el/staff/personalPage/3af26c59-7dd0-4167-8c17-7f755a03a58c",
+    "Π. Τζούβελη": "https://www.ece.ntua.gr/el/staff/personalPage/9d066705-34aa-44eb-b722-f91bc41377e0",
+    "Π. Τσανάκας": "https://www.ece.ntua.gr/el/staff/personalPage/213162aa-6d0c-4b10-af3e-8ec610701b78",
+    "Σ. Κοκόσης": "https://www.ece.ntua.gr/el/staff/personalPage/22246cfb-3be9-402d-bcc2-99be9b84e608",
+    "Σ. Ξύδης": "https://www.ece.ntua.gr/el/staff/personalPage/e070f543-bdc7-4655-87de-449f2bf34580",
+};
