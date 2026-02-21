@@ -76,7 +76,7 @@ const CourseModal: React.FC<CourseModalProps> = ({ course, isOpen, onClose }) =>
         <div className="p-6 border-b border-gray-100 flex justify-between items-start bg-white z-10 shrink-0">
           <div>
              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md mb-2 inline-block">
-               {course.flow}
+               {course.flow_code ? `Ροή ${course.flow_code}` : course.flow}
              </span>
              <h2 className="text-2xl font-bold text-gray-900 leading-tight">
                {course.title}
