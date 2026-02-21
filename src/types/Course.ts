@@ -9,6 +9,7 @@ export interface Course {
     // Additional course details
     lecture_hours?: number;
     lab_hours?: number;
+    professors?: string;
 
     // New fields for validation
     type: 'compulsory' | 'elective' | 'humanities' | 'free' | 'project' | 'thesis';
