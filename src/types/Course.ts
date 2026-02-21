@@ -6,6 +6,10 @@ export interface Course {
     ects: number;
     description: string;
 
+    // Additional course details
+    lecture_hours?: number;
+    lab_hours?: number;
+
     // New fields for validation
     type: 'compulsory' | 'elective' | 'humanities' | 'free' | 'project' | 'thesis';
     flow_code: string; // e.g. "Y", "L", "H", "D", "T", "S", "Z", "E", "O", "I", "K" (Kormos), "X" (None)
