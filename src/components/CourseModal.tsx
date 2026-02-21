@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import type { Course } from '../types/Course';
+import { professorLinks } from '../data/professorLinks';
 
 interface CourseModalProps {
   course: Course;
@@ -22,6 +23,44 @@ const CourseModal: React.FC<CourseModalProps> = ({ course, isOpen, onClose }) =>
 
   if (!isOpen) return null;
 
+  // Helper to render professors with links
+  const renderProfessors = (professorsStr: string) => {
+    const parts = professorsStr.split(',').map(p => p.trim());
+
+    return parts.map((part, index) => {
+      // Try to match the name without titles like (Ε.ΔΙ.Π.)
+      // The key in professorLinks is just the name (e.g. "Γ. Γκούμας")
+      // But the part might be "Γ. Γκούμας" or "Γ. Σιόλας (Ε.ΔΙ.Π.)"
+
+      let nameToMatch = part;
+      // Remove text in parentheses for matching purposes
+      const match = part.match(/^(.*?)\s*\(.*?\)$/);
+      if (match) {
+        nameToMatch = match[1].trim();
+      }
+
+      const url = professorLinks[nameToMatch];
+
+      return (
+        <span key={index}>
+          {url ? (
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-700 font-medium hover:text-blue-900 hover:underline transition-colors"
+            >
+              {part}
+            </a>
+          ) : (
+            <span className="text-blue-800">{part}</span>
+          )}
+          {index < parts.length - 1 && ", "}
+        </span>
+      );
+    });
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -30,11 +69,11 @@ const CourseModal: React.FC<CourseModalProps> = ({ course, isOpen, onClose }) =>
         onClick={onClose}
       ></div>
 
-      {/* Modal Content */}
-      <div className="relative bg-white rounded-3xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col animate-scale-in">
+      {/* Modal Content Wrapper - Rounded & Overflow Hidden */}
+      <div className="relative bg-white rounded-3xl shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
 
-        {/* Header */}
-        <div className="p-6 border-b border-gray-100 flex justify-between items-start sticky top-0 bg-white z-10">
+        {/* Header - Static */}
+        <div className="p-6 border-b border-gray-100 flex justify-between items-start bg-white z-10 shrink-0">
           <div>
              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md mb-2 inline-block">
                {course.flow}
@@ -54,8 +93,8 @@ const CourseModal: React.FC<CourseModalProps> = ({ course, isOpen, onClose }) =>
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-6 space-y-6">
+        {/* Body - Scrollable */}
+        <div className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
 
           {/* Professors Section */}
           {course.professors && (
@@ -66,8 +105,8 @@ const CourseModal: React.FC<CourseModalProps> = ({ course, isOpen, onClose }) =>
                 </svg>
                 Διδάσκοντες
               </h3>
-              <p className="text-blue-800 text-sm leading-relaxed">
-                {course.professors}
+              <p className="text-sm leading-relaxed">
+                {renderProfessors(course.professors)}
               </p>
             </div>
           )}
@@ -97,8 +136,8 @@ const CourseModal: React.FC<CourseModalProps> = ({ course, isOpen, onClose }) =>
 
         </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end sticky bottom-0 z-10">
+        {/* Footer - Static */}
+        <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end shrink-0">
           <button
             onClick={onClose}
             className="px-5 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors shadow-sm"
