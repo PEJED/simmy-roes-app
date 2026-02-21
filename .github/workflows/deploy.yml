@@ -39,6 +39,7 @@ jobs:
           path: ./dist
 
   deploy:
+    if: github.ref == 'refs/heads/simmy-roes-init-16138192967642694897'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
