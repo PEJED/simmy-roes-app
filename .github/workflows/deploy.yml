@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main", "master", "simmy-roes-init-16138192967642694897"]
+    branches: ["main", "master", "simmy-roes-init-16138192967642694897", "populate-course-data-details-15268946109987609473"]
   workflow_dispatch:
 
 permissions:
