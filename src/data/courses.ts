@@ -254,6 +254,19 @@ export const courses: Course[] = [
         lecture_hours: 3,
         lab_hours: 0
     },
+    {
+        id: 711,
+        title: "Αλληλεπίδραση Ανθρώπου-Υπολογιστή",
+        semester: 7,
+        flow: "Υπολογιστές",
+        flow_code: "Y",
+        ects: 6,
+        type: 'compulsory',
+        is_flow_compulsory: true,
+        description: "Σχεδιασμός, ανάπτυξη και αξιολόγηση διαδραστικών συστημάτων. Μοντέλα χρήστη, ευχρηστία, σχεδίαση διεπαφών.",
+        lecture_hours: 2,
+        lab_hours: 2
+    },
 
     // --- Semester 8 ---
     {
@@ -376,6 +389,18 @@ export const courses: Course[] = [
         description: "Οπτικές ίνες, λέιζερ, οπτικοί ενισχυτές, μη γραμμική οπτική.",
         lecture_hours: 3,
         lab_hours: 1
+    },
+    {
+        id: 811,
+        title: "Απόδοση Συστημάτων Υπολογιστών",
+        semester: 8,
+        flow: "Υπολογιστές",
+        flow_code: "Y",
+        ects: 4,
+        type: 'elective',
+        description: "Μοντελοποίηση και ανάλυση απόδοσης, ουρές αναμονής, προσομοίωση, τεχνικές μέτρησης.",
+        lecture_hours: 3,
+        lab_hours: 0
     },
 
     // --- Semester 9 ---
