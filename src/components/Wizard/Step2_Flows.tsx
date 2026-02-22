@@ -42,7 +42,7 @@ const Step2Flows: React.FC = () => {
     const exclude = [...Object.keys(comb.required), ...(comb.option.excludeCodes || [])];
     return Object.keys(FLOW_NAMES).filter(code =>
       !exclude.includes(code) &&
-      !['M', 'F', 'K', 'X'].includes(code) // Exclude Math, Physics, Core, None
+      !['M', 'K', 'X'].includes(code) // Exclude Math, Core, None
     );
   };
 
@@ -263,7 +263,7 @@ const Step2Flows: React.FC = () => {
             </div>
             <div className="grid gap-4">
               {Object.entries(FLOW_NAMES).map(([code, name]) => {
-                 if (['M', 'F', 'X', 'K'].includes(code)) return null; // Skip non-flow items
+                 if (['M', 'X', 'K'].includes(code)) return null; // Skip non-flow items
                  return (
                    <div key={code} className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
                       <div className="flex items-center gap-3 mb-2">
