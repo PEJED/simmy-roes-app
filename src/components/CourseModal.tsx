@@ -29,11 +29,7 @@ const CourseModal: React.FC<CourseModalProps> = ({ course, isOpen, onClose }) =>
 
     return parts.map((part, index) => {
       // Try to match the name without titles like (Ε.ΔΙ.Π.)
-      // The key in professorLinks is just the name (e.g. "Γ. Γκούμας")
-      // But the part might be "Γ. Γκούμας" or "Γ. Σιόλας (Ε.ΔΙ.Π.)"
-
       let nameToMatch = part;
-      // Remove text in parentheses for matching purposes
       const match = part.match(/^(.*?)\s*\(.*?\)$/);
       if (match) {
         nameToMatch = match[1].trim();
@@ -61,6 +57,29 @@ const CourseModal: React.FC<CourseModalProps> = ({ course, isOpen, onClose }) =>
     });
   };
 
+  // Map Latin flow codes to Greek letters
+  const getLocalizedFlow = (code: string | undefined, name: string) => {
+    if (!code) return name;
+
+    const mapping: Record<string, string> = {
+      'L': 'Λ',
+      'H': 'Η', // Greek Eta
+      'Y': 'Υ',
+      'D': 'Δ',
+      'E': 'Ε',
+      'Z': 'Ζ',
+      'T': 'Τ',
+      'S': 'Σ',
+      'O': 'Ο',
+      'I': 'Ι',
+      'M': 'Μ',
+      'F': 'Φ'
+    };
+
+    const letter = mapping[code] || code;
+    return `Ροή ${letter}`;
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -76,7 +95,7 @@ const CourseModal: React.FC<CourseModalProps> = ({ course, isOpen, onClose }) =>
         <div className="p-6 border-b border-gray-100 flex justify-between items-start bg-white z-10 shrink-0">
           <div>
              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md mb-2 inline-block">
-               {course.flow_code ? `Ροή ${course.flow_code}` : course.flow}
+               {getLocalizedFlow(course.flow_code, course.flow)}
              </span>
              <h2 className="text-2xl font-bold text-gray-900 leading-tight">
                {course.title}
