@@ -3,11 +3,20 @@ import { useWizard } from '../../context/WizardContext';
 import { courses } from '../../data/courses';
 import CourseCard from '../CourseCard';
 import { FLOW_NAMES } from '../../utils/flowValidation';
-import { validateSelection, type Direction as RuleDirection } from '../../utils/ruleEngine';
+import { validateSelection } from '../../utils/ruleEngine';
 
 const Step3Courses: React.FC = () => {
-  const { direction, flowSelections, selectedCourseIds, toggleCourse, setStep } = useWizard();
+  const { flowSelections, selectedCourseIds, toggleCourse, setStep, lockedCourseIds, gpa, setGpa } = useWizard();
   const [activeTab, setActiveTab] = useState<'main' | 'free'>('main');
+
+  // GPA Limit Logic
+  const maxCoursesAllowed = useMemo(() => {
+    if (gpa === null || gpa === undefined) return 12; // Default max if no GPA
+    if (gpa < 7) return 6;
+    if (gpa < 8) return 7;
+    if (gpa < 9) return 8;
+    return 9;
+  }, [gpa]);
 
   // Filter courses based on flow selections
   const { mainCourses, freeElectiveCourses } = useMemo(() => {
@@ -23,16 +32,8 @@ const Step3Courses: React.FC = () => {
 
       if (isSelectedFlow) {
         main.push(course);
-      } else if (['M', 'F'].includes(course.flow_code) || course.type === 'free' || course.type === 'humanities') {
-        // M, F, Free, Humanities are strictly free electives
-        free.push(course);
       } else {
-        // Courses from other non-selected flows can also be free electives
-        // But for now, let's keep it simple or allow them?
-        // User said: "Add M and F... as Pool of Electives".
-        // Let's include them in free for now to be flexible, or maybe just M/F/Humanities.
-        // Let's include ALL non-selected flow courses in free?
-        // That might be too many. Let's stick to M, F, Humanities for now.
+        free.push(course);
       }
     });
 
@@ -51,7 +52,7 @@ const Step3Courses: React.FC = () => {
     return grouped;
   }, [activeTab, mainCourses, freeElectiveCourses]);
 
-  // Validation Logic per Flow (Same as before)
+  // Validation Logic per Flow
   const validationStatus = useMemo(() => {
     const status: Record<string, { total: number, compulsory: number, targetTotal: number, targetCompulsory: number }> = {};
 
@@ -81,12 +82,20 @@ const Step3Courses: React.FC = () => {
   // General Rules Validation
   const generalWarnings = useMemo(() => {
     const selected = courses.filter(c => selectedCourseIds.includes(String(c.id)));
-    // Map Direction format (Capitalized) to RuleDirection (lowercase)
-    const ruleDirection = direction ? direction.toLowerCase() as RuleDirection : null;
-    return validateSelection(selected, ruleDirection);
-  }, [selectedCourseIds, direction]);
+
+    // Call new ruleEngine with flowSelections.
+    const warnings = validateSelection(selected, flowSelections);
+
+    // Add GPA Warning
+    if (selected.length > maxCoursesAllowed) {
+        warnings.push(`Υπέρβαση ορίου μαθημάτων βάσει Μ.Ο. (${maxCoursesAllowed}). Έχετε επιλέξει ${selected.length}.`);
+    }
+
+    return warnings;
+  }, [selectedCourseIds, flowSelections, maxCoursesAllowed]);
 
   const isFlowsComplete = Object.values(validationStatus).every(s => s.total >= s.targetTotal && s.compulsory >= s.targetCompulsory);
+
   const isComplete = isFlowsComplete && generalWarnings.length === 0;
 
   return (
@@ -102,6 +111,28 @@ const Step3Courses: React.FC = () => {
         </button>
 
         <h3 className="text-xl font-bold text-gray-800 mb-4">Έλεγχος Ροών</h3>
+
+        {/* GPA Input */}
+        <div className="mb-6 bg-blue-50 p-4 rounded-xl border border-blue-100">
+            <label className="block text-sm font-bold text-blue-800 mb-1">
+                Μέσος Όρος (GPA)
+            </label>
+            <div className="flex gap-2">
+                <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="10"
+                    value={gpa ?? ''}
+                    onChange={(e) => setGpa(e.target.value ? parseFloat(e.target.value) : null)}
+                    className="w-full px-3 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="π.χ. 7.5"
+                />
+            </div>
+            <p className="text-xs text-blue-600 mt-2">
+                Όριο μαθημάτων: <strong>{maxCoursesAllowed}</strong>
+            </p>
+        </div>
 
         <div className="space-y-4">
           {Object.entries(validationStatus).map(([code, stat]) => {
@@ -206,6 +237,7 @@ const Step3Courses: React.FC = () => {
                        course={course}
                        isSelected={selectedCourseIds.includes(String(course.id))}
                        onToggle={(c) => toggleCourse(String(c.id))}
+                       isDisabled={lockedCourseIds.includes(String(course.id))}
                      />
                    ))}
                  </div>
