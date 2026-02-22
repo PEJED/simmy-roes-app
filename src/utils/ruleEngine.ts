@@ -1,7 +1,8 @@
 import type { Course } from '../types/Course';
-import type { FlowSelection } from './flowValidation';
+import type { FlowSelection, Direction } from './flowValidation';
+import { FLOW_RULES } from '../data/flowRules';
 
-export type Direction = 'electronics' | 'informatics' | 'communications' | 'energy';
+export { type Direction };
 
 export const DIRECTIONS = {
     electronics: 'Ηλεκτρονικής και Συστημάτων',
@@ -10,134 +11,85 @@ export const DIRECTIONS = {
     energy: 'Ενέργειας'
 };
 
-const FULL_FLOW_TOTAL = 7;
-const FULL_FLOW_COMPULSORY = 4;
-const HALF_FLOW_TOTAL = 4;
-const HALF_FLOW_COMPULSORY = 3;
-
-interface FlowBucket {
-    compulsory: number;
-    elective: number;
-    overflow: number;
-}
-
 export const validateSelection = (
     selectedCourses: Course[],
+    direction: Direction | null,
     flowSelections: Record<string, FlowSelection>
 ): string[] => {
     const warnings: string[] = [];
+    const selectedIds = selectedCourses.map(c => String(c.id));
 
-    // Buckets for flow counting
-    const flowBuckets: Record<string, FlowBucket> = {};
-    let freeCount = 0;
-    let humanitiesCount = 0;
-    let nonFlowCount = 0;
+    // 1. General Limits
+    const strictFree = selectedCourses.filter(c => c.type === 'free' || ['M', 'F'].includes(c.flow_code)).length;
+    const humanitiesCount = selectedCourses.filter(c => c.type === 'humanities' || c.flow_code === 'K').length;
+    const nonFlowCount = selectedCourses.filter(c => c.flow_code === 'G').length;
 
-    // Initialize buckets for selected flows
-    Object.keys(flowSelections).forEach(flowCode => {
-        flowBuckets[flowCode] = { compulsory: 0, elective: 0, overflow: 0 };
+    if (strictFree > 5) warnings.push(`Έχετε επιλέξει ${strictFree} ελεύθερα μαθήματα (Μέγιστο: 5).`);
+    if (humanitiesCount > 1) warnings.push(`Έχετε επιλέξει ${humanitiesCount} ανθρωπιστικά μαθήματα (Μέγιστο: 1).`);
+    if (nonFlowCount > 1) warnings.push(`Έχετε επιλέξει ${nonFlowCount} μαθήματα εκτός ροών (Μέγιστο: 1).`);
+
+    // 2. Semester Limits (>7)
+    const semCounts = {6:0, 7:0, 8:0, 9:0};
+    selectedCourses.forEach(c => {
+        if (semCounts[c.semester as keyof typeof semCounts] !== undefined) {
+            semCounts[c.semester as keyof typeof semCounts]++;
+        }
     });
 
-    // Helper to get targets
-    const getTargets = (flowCode: string) => {
-        const selection = flowSelections[flowCode];
-        if (selection === 'full') return { total: FULL_FLOW_TOTAL, comp: FULL_FLOW_COMPULSORY };
-        if (selection === 'half') return { total: HALF_FLOW_TOTAL, comp: HALF_FLOW_COMPULSORY };
-        return { total: 0, comp: 0 }; // Should not happen if initialized
-    };
-
-    // Process courses
-    // Sort to prioritize compulsory courses filling the requirements first
-    const sortedCourses = [...selectedCourses].sort((a, b) => {
-        if (a.is_flow_compulsory && !b.is_flow_compulsory) return -1;
-        if (!a.is_flow_compulsory && b.is_flow_compulsory) return 1;
-        return 0;
+    [6, 7, 8, 9].forEach(sem => {
+        if (semCounts[sem as keyof typeof semCounts] > 7) {
+            warnings.push(`Υπέρβαση ορίου μαθημάτων στο ${sem}ο εξάμηνο (>7).`);
+        }
     });
 
-    sortedCourses.forEach(c => {
-        const flowCode = c.flow_code;
+    // 3. Flow Specific Rules
+    Object.entries(flowSelections).forEach(([flowCode, selection]) => {
+        if (selection === 'none') return;
 
-        // Check if course belongs to a selected flow
-        if (flowSelections[flowCode]) {
-            const bucket = flowBuckets[flowCode];
-            const targets = getTargets(flowCode);
-            const currentTotal = bucket.compulsory + bucket.elective;
+        let rule = FLOW_RULES[flowCode]?.[selection];
+        if (typeof rule === 'function') {
+            rule = rule(direction);
+        }
 
-            if (c.is_flow_compulsory) {
-                // Try to fill compulsory slot
-                if (bucket.compulsory < targets.comp) {
-                    bucket.compulsory++;
-                }
-                // Else try to fill elective slot (compulsory acting as elective)
-                else if (currentTotal < targets.total) {
-                    bucket.elective++;
-                }
-                // Else overflow
-                else {
-                    bucket.overflow++;
-                }
-            } else {
-                // Elective
-                if (currentTotal < targets.total) {
-                    bucket.elective++;
-                } else {
-                    bucket.overflow++;
-                }
-            }
-        } else {
-            // Course not in a selected flow
-            if (flowCode === 'K' || c.type === 'humanities') {
-                humanitiesCount++;
-            } else if (flowCode === 'G') {
-                nonFlowCount++;
-            } else {
-                // M, F, or other flows not selected -> Free Elective
-                freeCount++;
+        if (!rule) return;
+
+        // Check compulsory list
+        if (rule.compulsory) {
+            const missing = rule.compulsory.filter(id => !selectedIds.includes(id));
+            if (missing.length > 0) {
+                warnings.push(`Ροή ${flowCode} (${selection === 'full' ? 'Ολόκληρη' : 'Μισή'}): Λείπουν ${missing.length} υποχρεωτικά μαθήματα.`);
             }
         }
-    });
 
-    // Add overflows to free count
-    Object.values(flowBuckets).forEach(b => {
-        freeCount += b.overflow;
-    });
-
-    // Rule 1: Max 5 free courses
-    if (freeCount > 5) {
-        warnings.push(`Έχετε επιλέξει ${freeCount} ελεύθερα μαθήματα (Μέγιστο: 5).`);
-    }
-
-    // Rule 2: Max 1 humanities course
-    if (humanitiesCount > 1) {
-        warnings.push(`Έχετε επιλέξει ${humanitiesCount} ανθρωπιστικά μαθήματα (Μέγιστο: 1).`);
-    }
-
-    // Rule 3: Max 1 non-flow course
-    if (nonFlowCount > 1) {
-        warnings.push(`Έχετε επιλέξει ${nonFlowCount} μαθήματα εκτός ροών (Μέγιστο: 1).`);
-    }
-
-    // Check Flow Requirements (Undercount)
-    Object.entries(flowBuckets).forEach(([flowCode, bucket]) => {
-        const targets = getTargets(flowCode);
-        const total = bucket.compulsory + bucket.elective;
-
-        if (bucket.compulsory < targets.comp) {
-            warnings.push(`Ροή ${flowCode}: Απαιτούνται ${targets.comp} υποχρεωτικά μαθήματα (Επιλεγμένα: ${bucket.compulsory}).`);
+        // Check required count from pool
+        if (rule.pool && rule.required_count) {
+            const selectedFromPool = rule.pool.filter(id => selectedIds.includes(id)).length;
+            if (selectedFromPool < rule.required_count) {
+                warnings.push(`Ροή ${flowCode}: Πρέπει να επιλέξετε τουλάχιστον ${rule.required_count} από τη λίστα υποχρεωτικών (Επιλέξατε: ${selectedFromPool}).`);
+            }
         }
-        if (total < targets.total) {
-            warnings.push(`Ροή ${flowCode}: Απαιτούνται συνολικά ${targets.total} μαθήματα (Επιλεγμένα: ${total}).`);
+
+        // Check options (OR logic)
+        if (rule.options) {
+            rule.options.forEach((optGroup, idx) => {
+                const hasOne = optGroup.some(id => selectedIds.includes(id));
+                if (!hasOne) {
+                    warnings.push(`Ροή ${flowCode}: Πρέπει να επιλέξετε ένα από τα μαθήματα της ομάδας επιλογής ${idx + 1}.`);
+                }
+            });
         }
     });
 
-    // Rule 4: At least 1 compulsory course from 6th semester from 3 different CORE flows
-    const distinctFlows6th = new Set(
+    // 4. 6th Semester Rule (1 compulsory from 3 flows)
+    const coreFlows = ['Y', 'L', 'H', 'D', 'T', 'S', 'Z', 'E'];
+    const flowsWithComp6th = new Set(
         selectedCourses
-            .filter(c => c.semester === 6 && c.is_flow_compulsory && ['Y', 'L', 'H', 'D', 'T', 'S', 'Z', 'E'].includes(c.flow_code))
+            .filter(c => c.semester === 6 && c.is_flow_compulsory && coreFlows.includes(c.flow_code))
             .map(c => c.flow_code)
     );
-    if (distinctFlows6th.size < 3) {
-        warnings.push(`Πρέπει να επιλέξετε τουλάχιστον 1 υποχρεωτικό μάθημα 6ου εξαμήνου από 3 διαφορετικές βασικές ροές (Υ, Λ, Η, Δ, Τ, Σ, Ζ, Ε). (Τρέχουσες: ${distinctFlows6th.size})`);
+
+    if (flowsWithComp6th.size < 3) {
+        warnings.push(`Κανόνας 6ου Εξαμήνου: Επιλογή 1 υποχρεωτικού από 3 διαφορετικές βασικές ροές (Τρέχουσες: ${flowsWithComp6th.size}).`);
     }
 
     return warnings;

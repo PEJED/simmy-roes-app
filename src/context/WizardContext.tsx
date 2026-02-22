@@ -8,7 +8,6 @@ interface WizardState {
   selectedCombinationId: string | null;
   flowSelections: Record<string, FlowSelection>; // e.g. { 'Y': 'full', 'L': 'half' }
   selectedCourseIds: string[];
-  gpa: number | null;
 }
 
 interface WizardContextType extends WizardState {
@@ -18,7 +17,6 @@ interface WizardContextType extends WizardState {
   setFlowSelection: (flowCode: string, selection: FlowSelection) => void;
   resetFlowSelections: () => void;
   toggleCourse: (courseId: string) => void;
-  setGpa: (gpa: number | null) => void;
   validation: { isValid: boolean; error: string | null };
   lockedCourseIds: string[];
 }
@@ -31,18 +29,30 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [selectedCombinationId, setSelectedCombinationId] = useState<string | null>(null);
   const [flowSelections, setFlowSelections] = useState<Record<string, FlowSelection>>({});
   const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
-  const [gpa, setGpa] = useState<number | null>(null);
 
   const validation = useMemo(() => {
     if (!direction) return { isValid: false, error: 'Επιλέξτε Κατεύθυνση' };
     return validateDirectionSelection(direction, flowSelections);
   }, [direction, flowSelections]);
 
+  // Keep simple locking based on is_flow_compulsory for now?
+  // User asked for complex rules. We will handle visual categorization in UI.
+  // We can still auto-select "core" compulsory if we want, or leave it to user.
+  // The user requirement "Mandatory courses... Must be pre-selected, disabled" was from Step 1 of this task.
+  // The current request says "split into 3 categories... compulsory...".
+  // It implies we should still treat them as locked/pre-selected?
+  // Yes, probably. But "3 of 5" makes pre-selection ambiguous.
+  // "4 of 5" -> which 4?
+  // So locking is only possible for strict "100% required" courses.
+  // I will keep the *concept* of locking but update the logic later if needed.
+  // For now, I'll rely on the simple 'is_flow_compulsory' for the initial lock,
+  // or maybe I should disable locking until the new rules are in place?
+  // Let's keep it simple here and refine in Step3_Courses.
+
   const lockedCourseIds = useMemo(() => {
     const ids: string[] = [];
     Object.entries(flowSelections).forEach(([flowCode, selection]) => {
       if (selection === 'full') {
-        // Lock all compulsory courses for Full Flows
         const compulsoryCourses = courses.filter(
           c => c.flow_code === flowCode && c.is_flow_compulsory
         );
@@ -52,7 +62,6 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return ids;
   }, [flowSelections]);
 
-  // Auto-select locked courses
   useEffect(() => {
     if (lockedCourseIds.length > 0) {
       setSelectedCourseIds(prev => {
@@ -75,7 +84,7 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const toggleCourse = (courseId: string) => {
-    if (lockedCourseIds.includes(courseId)) return; // Prevent toggling locked courses
+    if (lockedCourseIds.includes(courseId)) return;
 
     setSelectedCourseIds(prev =>
       prev.includes(courseId)
@@ -90,14 +99,12 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     selectedCombinationId,
     flowSelections,
     selectedCourseIds,
-    gpa,
     setStep,
     setDirection,
     setSelectedCombinationId,
     setFlowSelection: setFlowSelectionHandler,
     resetFlowSelections,
     toggleCourse,
-    setGpa,
     validation,
     lockedCourseIds
   };
