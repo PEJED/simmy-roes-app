@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { validateDirectionSelection, type FlowSelection } from './flowValidation';
+import { validateDirectionSelection } from './flowValidation';
+import type { FlowSelection } from './flowValidation';
 
 describe('validateDirectionSelection', () => {
   const emptyFlows: Record<string, FlowSelection> = {};
