@@ -42,7 +42,7 @@ const Step2Flows: React.FC = () => {
     const exclude = [...Object.keys(comb.required), ...(comb.option.excludeCodes || [])];
     return Object.keys(FLOW_NAMES).filter(code =>
       !exclude.includes(code) &&
-      !['K', 'X'].includes(code) // Exclude Core, None
+      !['K', 'X', 'G'].includes(code) // Exclude Non-flow items (G/X/K)
     );
   };
 
@@ -52,15 +52,19 @@ const Step2Flows: React.FC = () => {
   };
 
   const handleOtherFlowChange = (code: string, selection: FlowSelection) => {
-    // Clear any previous "Other" selection that is NOT in the required set
-    const requiredCodes = Object.keys(currentComb?.required || {});
+    // If strictly selecting one full flow (for options b/c), enforce single selection
+    if (currentComb?.option.type === 'select_one_full') {
+        const requiredCodes = Object.keys(currentComb?.required || {});
+        Object.keys(flowSelections).forEach(c => {
+           if (!requiredCodes.includes(c) && c !== code && !['I', 'O'].includes(c)) {
+               setFlowSelection(c, 'none');
+           }
+        });
+        setFlowSelection(code, selection);
+        return;
+    }
 
-    Object.keys(flowSelections).forEach(c => {
-       if (!requiredCodes.includes(c) && c !== code && !['I', 'O'].includes(c)) {
-           setFlowSelection(c, 'none');
-       }
-    });
-
+    // If 'any_ge_half' (option a), allow multi-selection (for Way 3: 2 Halfs)
     setFlowSelection(code, selection);
   };
 
@@ -75,8 +79,9 @@ const Step2Flows: React.FC = () => {
     if (!currentComb) return false;
 
     const requiredCodes = Object.keys(currentComb.required);
+    // Filter flows that are NOT required and NOT I/O (I/O are special flows)
     const otherFlows = Object.entries(flowSelections).filter(([code, sel]) =>
-      !requiredCodes.includes(code) && sel !== 'none'
+      !requiredCodes.includes(code) && sel !== 'none' && !['I', 'O'].includes(code)
     );
 
     if (currentComb.option.type === 'select_one_full') {
@@ -84,12 +89,21 @@ const Step2Flows: React.FC = () => {
        const match = otherFlows.find(([code, sel]) =>
          currentComb.option.allowedCodes?.includes(code) && sel === 'full'
        );
-       return !!match;
+       return !!match && otherFlows.length === 1;
     }
 
     if (currentComb.option.type === 'any_ge_half') {
-       // Must have at least one half or full
-       return otherFlows.length > 0;
+       const fullCount = otherFlows.filter(([, s]) => s === 'full').length;
+       const halfCount = otherFlows.filter(([, s]) => s === 'half').length;
+
+       // Way 1: 1 Full extra flow
+       if (fullCount === 1 && halfCount === 0) return true;
+       // Way 2: 1 Half extra flow
+       if (fullCount === 0 && halfCount === 1) return true;
+       // Way 3: 2 Half extra flows
+       if (fullCount === 0 && halfCount === 2) return true;
+
+       return false;
     }
 
     return false;
@@ -157,7 +171,7 @@ const Step2Flows: React.FC = () => {
           </div>
 
           {/* Main Flow Grid - Compact */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className={`grid grid-cols-1 ${currentComb.option.type === 'any_ge_half' ? 'md:grid-cols-[1fr_1fr_2fr]' : 'sm:grid-cols-3'} gap-4`}>
              {/* Required Flows */}
              {Object.entries(currentComb.required).map(([code, sel]) => (
                <div key={code} className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex flex-col justify-between h-full">
@@ -173,37 +187,69 @@ const Step2Flows: React.FC = () => {
 
              {/* "Other" Flow Selector */}
              <div className="p-3 bg-blue-50/50 rounded-lg border-2 border-dashed border-blue-200 flex flex-col justify-between h-full relative overflow-hidden">
-               <div className="relative z-10">
-                 <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider text-blue-600 bg-blue-100 uppercase mb-1">
+               <div className="relative z-10 flex flex-col h-full">
+                 <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider text-blue-600 bg-blue-100 uppercase mb-1 self-start">
                    3η Επιλογη
                  </span>
-                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                   Επιλέξτε ροή
-                 </label>
-                 <select
-                   className="w-full p-2 bg-white border border-blue-300 rounded text-xs text-gray-900 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm"
-                   onChange={(e) => {
-                      const [code, type] = e.target.value.split(':');
-                      if (code) handleOtherFlowChange(code, type as FlowSelection);
-                   }}
-                   defaultValue=""
-                 >
-                   <option value="" disabled>-- Επιλογή --</option>
-                   {currentComb.option.type === 'any_ge_half' ? (
-                     getAvailableFlows(currentComb).map(code => (
-                       <React.Fragment key={code}>
-                         {!['I', 'O'].includes(code) && (
-                           <option value={`${code}:half`}>{FLOW_NAMES[code]} (Μισή)</option>
-                         )}
-                         <option value={`${code}:full`}>{FLOW_NAMES[code]} (Ολόκληρη)</option>
-                       </React.Fragment>
-                     ))
-                   ) : (
-                     getAllowedFlows(currentComb).map(code => (
-                       <option key={code} value={`${code}:full`}>{FLOW_NAMES[code]} (Ολόκληρη)</option>
-                     ))
-                   )}
-                 </select>
+
+                 {currentComb.option.type === 'any_ge_half' ? (
+                   <div className="flex-1 overflow-hidden flex flex-col min-h-[140px]">
+                      <div className="text-[10px] text-gray-500 italic mb-2">
+                         Επιλέξτε: 1 Ολόκληρη, ή 1 Μισή, ή 2 Μισές
+                      </div>
+                      <div className="overflow-y-auto pr-1 flex-1 space-y-2 custom-scrollbar">
+                         {getAvailableFlows(currentComb).map(code => {
+                            if (['I', 'O'].includes(code)) return null;
+                            const selection = flowSelections[code] || 'none';
+                            return (
+                               <div key={code} className="bg-white p-2 rounded border border-blue-100 text-xs">
+                                   <div className="font-bold text-gray-700 mb-1 flex justify-between items-center">
+                                     <span>{FLOW_NAMES[code]}</span>
+                                   </div>
+                                   <div className="flex gap-1">
+                                       {['none', 'half', 'full'].map(opt => (
+                                           <button
+                                               key={opt}
+                                               onClick={() => handleOtherFlowChange(code, opt as FlowSelection)}
+                                               className={`flex-1 px-1 py-0.5 rounded text-[9px] uppercase font-bold transition-all border ${
+                                                  selection === opt
+                                                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                                                  : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                                               }`}
+                                           >
+                                               {opt === 'none' ? '-' : opt === 'half' ? '1/2' : 'Full'}
+                                           </button>
+                                       ))}
+                                   </div>
+                               </div>
+                            );
+                         })}
+                      </div>
+                   </div>
+                 ) : (
+                   <div className="flex flex-col justify-center h-full">
+                     <label className="block text-xs font-medium text-gray-700 mb-1">
+                       Επιλέξτε ροή
+                     </label>
+                     <select
+                       className="w-full p-2 bg-white border border-blue-300 rounded text-xs text-gray-900 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm"
+                       onChange={(e) => {
+                          const [code, type] = e.target.value.split(':');
+                          if (code) handleOtherFlowChange(code, type as FlowSelection);
+                       }}
+                       value={
+                          getAllowedFlows(currentComb).find(c => flowSelections[c] === 'full')
+                          ? `${getAllowedFlows(currentComb).find(c => flowSelections[c] === 'full')}:full`
+                          : ''
+                       }
+                     >
+                       <option value="" disabled>-- Επιλογή --</option>
+                       {getAllowedFlows(currentComb).map(code => (
+                         <option key={code} value={`${code}:full`}>{FLOW_NAMES[code]} (Ολόκληρη)</option>
+                       ))}
+                     </select>
+                   </div>
+                 )}
                </div>
              </div>
           </div>
