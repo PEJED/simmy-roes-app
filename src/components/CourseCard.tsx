@@ -7,9 +7,10 @@ interface CourseCardProps {
   course: Course;
   isSelected: boolean;
   onToggle: (course: Course) => void;
+  isDisabled?: boolean;
 }
 
-const CourseCard: React.FC<CourseCardProps> = ({ course, isSelected, onToggle }) => {
+const CourseCard: React.FC<CourseCardProps> = ({ course, isSelected, onToggle, isDisabled }) => {
   const [showModal, setShowModal] = useState(false);
 
   // Determine flow badge color based on flow_code
@@ -43,6 +44,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, isSelected, onToggle })
       <div
         className={`relative bg-white rounded-xl shadow-sm border transition-all duration-200 hover:shadow-md h-full flex flex-col justify-between
           ${isSelected ? 'border-green-500 ring-2 ring-green-500 ring-opacity-50' : 'border-gray-200 hover:border-blue-300'}
+          ${isDisabled ? 'opacity-75 bg-gray-50' : ''}
         `}
       >
         {/* Header / Summary */}
@@ -77,30 +79,30 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, isSelected, onToggle })
                 </svg>
              </div>
           </div>
-
-          {/* Professor Preview (Optional) */}
-          {course.professors && (
-            <div className="mt-3 text-xs text-gray-500 truncate" title={course.professors}>
-               <span className="font-medium text-gray-400">Διδάσκοντες: </span>
-               {course.professors}
-            </div>
-          )}
         </div>
 
         {/* Action Button */}
         <div className="p-3 bg-gray-50 rounded-b-xl border-t border-gray-100 flex justify-end">
           <button
+            disabled={isDisabled}
             onClick={(e) => {
               e.stopPropagation();
               onToggle(course);
             }}
             className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 w-full justify-center
-              ${isSelected
-                ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
-                : 'bg-green-600 text-white hover:bg-green-700 shadow-sm'
+              ${isDisabled
+                ? 'bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300'
+                : isSelected
+                  ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
+                  : 'bg-green-600 text-white hover:bg-green-700 shadow-sm'
               }`}
           >
-            {isSelected ? (
+            {isDisabled ? (
+               <>
+                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                 Κλειδωμένο
+               </>
+            ) : isSelected ? (
               <>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 Αφαίρεση
