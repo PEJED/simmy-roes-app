@@ -98,4 +98,9 @@ export const professorLinks: Record<string, string> = {
     "Χ. Τσιρώνης": "",
     "Χ. Χριστοδούλου": "",
     "Χ. Ψυλλάκης": "https://www.ece.ntua.gr/el/staff/personalPage/131ea5d1-8023-426c-94cc-3e46a795ebaf",
+    "Δ. Γιόβα": "",
+    "Κ. Πολιτόπουλος": "",
+    "Ε. Αλεξανδράτου": "",
+    "Γ. Ματσόπουλος": "",
+    "Ο. Πετροπούλου": "",
 };
