@@ -33,4 +33,10 @@ export const professorLinks: Record<string, string> = {
     "Σ. Κοκόσης": "https://www.ece.ntua.gr/el/staff/personalPage/22246cfb-3be9-402d-bcc2-99be9b84e608",
     "Σ. Ξύδης": "https://www.ece.ntua.gr/el/staff/personalPage/e070f543-bdc7-4655-87de-449f2bf34580",
     "Σ. Παπαβασιλείου": "https://www.ece.ntua.gr/el/staff/personalPage/cfb2b5ae-8945-4603-a80e-0362491a5010",
+    "Ι. Κορδώνης": "https://www.ece.ntua.gr/el/staff/personalPage/6eb1575a-9e10-11f0-9690-0242ac110004",
+    "Χ. Ψυλλάκης": "https://www.ece.ntua.gr/el/staff/personalPage/131ea5d1-8023-426c-94cc-3e46a795ebaf",
+    "Α. Ροντογιάννης": "https://www.ece.ntua.gr/el/staff/personalPage/17b55203-a9e0-4658-8e88-ddee9cfcdda5",
+    "Κ. Τζαφέστας": "https://www.ece.ntua.gr/el/staff/personalPage/7c9f45d8-9bd2-4203-b42d-f90e9d755db5",
+    "Π. Μαραγκός": "https://www.ece.ntua.gr/el/staff/personalPage/2ed9bd28-134c-48ec-995f-6cf707ef1f25",
+    "Α. Ποταμιάνος": "https://www.ece.ntua.gr/el/staff/personalPage/0ce12613-090d-44b3-9dba-739463de8466",
 };
