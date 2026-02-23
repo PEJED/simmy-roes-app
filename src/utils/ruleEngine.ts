@@ -66,6 +66,9 @@ export const validateSelection = (
         // A course counts as compulsory if marked in data OR listed in FLOW_RULES (compulsory list or pool)
         let isCompulsory = (c: Course) => c.is_flow_compulsory;
 
+        // Ensure selection is valid key for FLOW_RULES (exclude 'none')
+        if (selection === 'none') return;
+
         const rule = FLOW_RULES[flowCode]?.[selection];
         const ruleObj = typeof rule === 'function' ? rule(direction) : rule;
 
@@ -93,8 +96,8 @@ export const validateSelection = (
 
         // Check Options from FLOW_RULES (e.g. "One of A or B")
         if (ruleObj && ruleObj.options) {
-             ruleObj.options.forEach((optGroup, idx) => {
-                const hasOne = optGroup.some(id => selectedIds.has(id));
+             ruleObj.options.forEach((optGroup: string[], idx: number) => {
+                const hasOne = optGroup.some((id: string) => selectedIds.has(id));
                 if (!hasOne) {
                     warnings.push(`Ροή ${flowCode}: Πρέπει να επιλέξετε ένα από τα μαθήματα της ομάδας επιλογής ${idx + 1}.`);
                 }

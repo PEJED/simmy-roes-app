@@ -175,7 +175,7 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                                 <svg className={`w-4 h-4 text-gray-400 transform transition-transform duration-300 ${isOpen('comp') ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             </div>
                         </button>
-                        {isOpen('comp') && renderCourseGrid(data.compulsory, isOverLimit)}
+                        {isOpen('comp') && renderCourseGrid(data.compulsory)}
                     </div>
                 )}
 
@@ -196,7 +196,7 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                                 <svg className={`w-4 h-4 text-gray-400 transform transition-transform duration-300 ${isOpen('flow') ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             </div>
                         </button>
-                        {isOpen('flow') && renderCourseGrid(data.flow_elective, isOverLimit)}
+                        {isOpen('flow') && renderCourseGrid(data.flow_elective)}
                     </div>
                 )}
 
@@ -214,7 +214,7 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                                 <svg className={`w-4 h-4 text-gray-400 transform transition-transform duration-300 ${isOpen('free') ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             </div>
                         </button>
-                        {isOpen('free') && renderCourseGrid(data.free, isOverLimit)}
+                        {isOpen('free') && renderCourseGrid(data.free)}
                     </div>
                 )}
             </div>

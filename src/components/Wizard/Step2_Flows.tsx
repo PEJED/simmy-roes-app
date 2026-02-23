@@ -106,7 +106,6 @@ const Step2Flows: React.FC = () => {
             !requiredCodes.includes(c) && s !== 'none'
           );
 
-          const currentSel = flowSelections[code];
           const others = otherFlows.filter(([c]) => c !== code);
 
           const fullCount = others.filter(([, s]) => s === 'full').length;
