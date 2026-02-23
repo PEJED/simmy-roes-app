@@ -17,8 +17,6 @@ const Step3Courses: React.FC = () => {
         let rule = FLOW_RULES[course.flow_code as string]?.[flowSel];
         if (typeof rule === 'function') rule = rule(direction);
 
-        // Simple heuristic for "Compulsory Candidate"
-        // If in compulsory list or pool or options
         const id = String(course.id);
         const isCompCandidate = rule?.compulsory?.includes(id) ||
                                 rule?.pool?.includes(id) ||
@@ -31,7 +29,14 @@ const Step3Courses: React.FC = () => {
 
   // Group Courses
   const coursesBySemester = useMemo(() => {
-    const grouped: Record<number, { compulsory: typeof courses, flow_elective: typeof courses, free: typeof courses, totalSelected: number }> = {};
+    const grouped: Record<number, {
+        compulsory: typeof courses,
+        flow_elective: typeof courses,
+        free: typeof courses,
+        totalSelected: number,
+        totalECTS: number,
+        totalHours: number
+    }> = {};
 
     [6, 7, 8, 9].forEach(sem => {
       const semCourses = courses.filter(c => c.semester === sem);
@@ -39,6 +44,8 @@ const Step3Courses: React.FC = () => {
       const flow_elective: typeof courses = [];
       const free: typeof courses = [];
       let totalSelected = 0;
+      let totalECTS = 0;
+      let totalHours = 0;
 
       semCourses.forEach(c => {
           const cat = getCourseCategory(c);
@@ -46,10 +53,14 @@ const Step3Courses: React.FC = () => {
           else if (cat === 'flow_elective') flow_elective.push(c);
           else free.push(c);
 
-          if (selectedCourseIds.includes(String(c.id))) totalSelected++;
+          if (selectedCourseIds.includes(String(c.id))) {
+              totalSelected++;
+              totalECTS += c.ects || 0;
+              totalHours += (c.lecture_hours || 0) + (c.lab_hours || 0);
+          }
       });
 
-      grouped[sem] = { compulsory, flow_elective, free, totalSelected };
+      grouped[sem] = { compulsory, flow_elective, free, totalSelected, totalECTS, totalHours };
     });
     return grouped;
   }, [flowSelections, direction, selectedCourseIds]);
@@ -59,7 +70,7 @@ const Step3Courses: React.FC = () => {
     return evaluateRules(selectedCourseIds, flowSelections, direction);
   }, [selectedCourseIds, flowSelections, direction]);
 
-  // Validation Warnings (General)
+  // Validation Warnings
   const generalWarnings = useMemo(() => {
     const selected = courses.filter(c => selectedCourseIds.includes(String(c.id)));
     return validateSelection(selected, direction, flowSelections);
@@ -67,9 +78,7 @@ const Step3Courses: React.FC = () => {
 
   const isComplete = generalWarnings.length === 0;
 
-  // Render Logic Helpers
   const isRuleRelevantToSemester = (rule: typeof ruleStatuses[0], semester: number) => {
-    // Check if any involved course is in this semester
     return rule.involvedCourseIds.some(id => {
        const c = courses.find(course => String(course.id) === id);
        return c && c.semester === semester;
@@ -85,38 +94,43 @@ const Step3Courses: React.FC = () => {
           const targetTotal = sel === 'full' ? 7 : 4;
           const targetComp = sel === 'full' ? 4 : 3;
 
-          // Count selected in this flow
           const selectedInFlow = courses.filter(c => c.flow_code === code && selectedCourseIds.includes(String(c.id)));
           const compSelected = selectedInFlow.filter(c => getCourseCategory(c) === 'compulsory').length;
           const flowElecSelected = selectedInFlow.filter(c => getCourseCategory(c) === 'flow_elective').length;
 
           stats[code] = {
-              compRem: Math.max(0, targetComp - compSelected), // Approximation
-              flowRem: Math.max(0, (targetTotal - targetComp) - flowElecSelected), // Approx
+              compRem: Math.max(0, targetComp - compSelected),
+              flowRem: Math.max(0, (targetTotal - targetComp) - flowElecSelected),
               freeRem: 0,
               totalReq: targetTotal
           };
       });
 
-      // Free count
       const freeSelected = courses.filter(c => selectedCourseIds.includes(String(c.id)) && getCourseCategory(c) === 'free').length;
+
+      // Determine Max Free based on flow config
+      let totalReqSum = 0;
+      Object.values(stats).forEach(s => totalReqSum += s.totalReq);
+
+      const maxFree = Math.max(0, 23 - totalReqSum);
+
       stats['Free'] = {
           compRem: 0, flowRem: 0,
-          freeRem: Math.max(0, 5 - freeSelected),
-          totalReq: 5
+          freeRem: Math.max(0, maxFree - freeSelected),
+          totalReq: maxFree
       };
 
       return stats;
   }, [selectedCourseIds, flowSelections]);
 
-  // Toggle Section Component
+  const clearAllCourses = () => {
+      const toRemove = selectedCourseIds.filter(id => !lockedCourseIds.includes(id));
+      toRemove.forEach(id => toggleCourse(id));
+  };
+
   const SemesterSection = ({ semester, data }: { semester: number, data: typeof coursesBySemester[6] }) => {
     const [openSections, setOpenSections] = useState({ comp: true, flow: true, free: false });
-
-    // Filter rules for this semester
     const semRules = ruleStatuses.filter(r => isRuleRelevantToSemester(r, semester));
-
-    // Limits
     const isOverLimit = data.totalSelected > 7;
     const isHardLimit = data.totalSelected >= 12;
 
@@ -143,7 +157,6 @@ const Step3Courses: React.FC = () => {
             </div>
 
             <div className="p-6 space-y-6">
-                {/* Rule Banners */}
                 {semRules.map(rule => (
                     <div key={rule.ruleId} className={`p-3 rounded-lg border-l-4 text-sm flex justify-between items-center ${rule.isMet ? 'bg-green-50 border-green-500 text-green-800' : 'bg-yellow-50 border-yellow-400 text-yellow-800'}`}>
                         <span>{FLOW_NAMES[rule.flowCode]}: {rule.description}</span>
@@ -155,8 +168,6 @@ const Step3Courses: React.FC = () => {
                     </div>
                 ))}
 
-                {/* Dropdowns */}
-                {/* 1. Compulsory */}
                 {data.compulsory.length > 0 && (
                     <div className="border rounded-lg overflow-hidden">
                         <button onClick={() => toggle('comp')} className="w-full px-4 py-3 bg-gray-50 flex justify-between items-center hover:bg-gray-100 transition-colors">
@@ -167,13 +178,18 @@ const Step3Courses: React.FC = () => {
                             <div className="p-4 bg-white grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {data.compulsory.map(c => {
                                     const id = String(c.id);
-                                    // Check if blocked by rule
-                                    // Find strict rules involving this course that are MET
                                     const blockingRule = semRules.find(r => r.isStrict && r.isMet && r.involvedCourseIds.includes(id));
                                     const isSelected = selectedCourseIds.includes(id);
 
                                     let disabled = false;
                                     let tooltip = "";
+                                    let extraClass = "";
+
+                                    // Highlight involved courses in active (unmet) rules
+                                    const activeRule = semRules.find(r => !r.isMet && r.involvedCourseIds.includes(id));
+                                    if (activeRule) {
+                                        extraClass = "ring-2 ring-yellow-400 ring-offset-2";
+                                    }
 
                                     if (lockedCourseIds.includes(id)) {
                                         disabled = true;
@@ -196,6 +212,7 @@ const Step3Courses: React.FC = () => {
                                             onToggle={() => toggleCourse(id)}
                                             isDisabled={disabled}
                                             tooltip={tooltip}
+                                            className={extraClass}
                                         />
                                     );
                                 })}
@@ -204,7 +221,6 @@ const Step3Courses: React.FC = () => {
                     </div>
                 )}
 
-                {/* 2. Flow Electives */}
                 {data.flow_elective.length > 0 && (
                     <div className="border rounded-lg overflow-hidden">
                         <button onClick={() => toggle('flow')} className="w-full px-4 py-3 bg-gray-50 flex justify-between items-center hover:bg-gray-100 transition-colors">
@@ -240,7 +256,6 @@ const Step3Courses: React.FC = () => {
                     </div>
                 )}
 
-                {/* 3. Free */}
                 {data.free.length > 0 && (
                     <div className="border rounded-lg overflow-hidden">
                         <button onClick={() => toggle('free')} className="w-full px-4 py-3 bg-gray-50 flex justify-between items-center hover:bg-gray-100 transition-colors">
@@ -276,6 +291,12 @@ const Step3Courses: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Footer Stats */}
+            <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 text-xs text-gray-500 flex justify-between font-medium">
+                <span>Σύνολο Ώρες: {data.totalHours}</span>
+                <span>ECTS: {data.totalECTS}</span>
+            </div>
         </div>
     );
   };
@@ -285,7 +306,16 @@ const Step3Courses: React.FC = () => {
 
       {/* Main Content (Left) */}
       <div className="flex-1 p-4 lg:p-8 order-2 lg:order-1">
-        <h2 className="text-3xl font-bold text-gray-900 mb-8">Επιλογή Μαθημάτων</h2>
+        <div className="flex justify-between items-start mb-8">
+            <h2 className="text-3xl font-bold text-gray-900">Επιλογή Μαθημάτων</h2>
+            <button
+                onClick={clearAllCourses}
+                className="px-3 py-1.5 bg-white border border-red-200 text-red-600 rounded-lg text-xs font-bold hover:bg-red-50 transition-colors shadow-sm flex items-center gap-1"
+            >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                Εκκαθάριση
+            </button>
+        </div>
 
         {/* Info Box */}
         <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-900 flex gap-4 items-start shadow-sm">
@@ -328,7 +358,19 @@ const Step3Courses: React.FC = () => {
           &larr; Πίσω στη Δομή
         </button>
 
-        <h3 className="text-xl font-bold text-gray-800 mb-6 border-b pb-2">Σύνοψη Επιλογών</h3>
+        <h3 className="text-xl font-bold text-gray-800 mb-6 border-b pb-2">Σύνοψη</h3>
+
+        {/* Total Progress */}
+        <div className="mb-6 p-4 bg-gray-900 rounded-xl text-white shadow-lg">
+            <div className="text-xs text-gray-400 font-bold uppercase mb-1">Συνολο Μαθηματων</div>
+            <div className="flex items-end gap-2">
+                <span className={`text-4xl font-bold ${selectedCourseIds.length === 23 ? 'text-green-400' : 'text-white'}`}>{selectedCourseIds.length}</span>
+                <span className="text-lg text-gray-500 mb-1">/ 23</span>
+            </div>
+            {selectedCourseIds.length > 23 && (
+                <div className="text-xs text-red-400 font-bold mt-2">Υπέρβαση ορίου διπλώματος!</div>
+            )}
+        </div>
 
         <div className="space-y-6">
             {Object.entries(flowStats).map(([key, stat]) => {
@@ -341,7 +383,7 @@ const Step3Courses: React.FC = () => {
                                 <span className={stat.freeRem > 0 ? 'text-blue-600 font-bold' : 'text-green-600 font-bold'}>{stat.freeRem}</span>
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-                                <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${((5-stat.freeRem)/5)*100}%` }}></div>
+                                <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, ((stat.totalReq-stat.freeRem)/stat.totalReq)*100)}%` }}></div>
                             </div>
                         </div>
                     );
