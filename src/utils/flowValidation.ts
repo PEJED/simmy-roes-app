@@ -87,7 +87,8 @@ const isHalf = (flows: Record<string, FlowSelection>, code: string) => flows[cod
 // Returns true if the remaining flows match one of the 3 strict sub-options for "{at least 1/2 other}"
 const checkAtLeastHalfOther = (flows: Record<string, FlowSelection>, excludeCodes: string[]) => {
   const otherFlows = Object.entries(flows).filter(([code, selection]) => {
-    return !excludeCodes.includes(code) && selection !== 'none' && !['I', 'O'].includes(code); // I and O handled separately or as needed
+    // I and O are included here because they can satisfy the "1 Full Flow" requirement for option (a)
+    return !excludeCodes.includes(code) && selection !== 'none';
   });
 
   const fullCount = otherFlows.filter(([, s]) => s === 'full').length;
@@ -108,7 +109,7 @@ const checkAtLeastHalfOther = (flows: Record<string, FlowSelection>, excludeCode
 // Helper: Check specific condition for "Full Other" (exactly 1 Full other)
 const checkFullOther = (flows: Record<string, FlowSelection>, excludeCodes: string[], allowedCodes: string[]) => {
   const otherFlows = Object.entries(flows).filter(([code, selection]) => {
-    return !excludeCodes.includes(code) && selection !== 'none' && !['I', 'O'].includes(code);
+    return !excludeCodes.includes(code) && selection !== 'none';
   });
 
   if (otherFlows.length !== 1) return false;

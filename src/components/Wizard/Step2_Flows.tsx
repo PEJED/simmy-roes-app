@@ -50,13 +50,18 @@ const Step2Flows: React.FC = () => {
 
   const handleOtherFlowChange = (code: string, selection: FlowSelection) => {
     if (currentComb?.option.type === 'select_one_full') {
-        const requiredCodes = Object.keys(currentComb?.required || {});
-        Object.keys(flowSelections).forEach(c => {
-           if (!requiredCodes.includes(c) && c !== code) {
-               setFlowSelection(c, 'none');
-           }
-        });
-        setFlowSelection(code, selection);
+        // If selecting full, deselect others first
+        if (selection === 'full') {
+            const requiredCodes = Object.keys(currentComb?.required || {});
+            Object.keys(flowSelections).forEach(c => {
+               if (!requiredCodes.includes(c) && c !== code) {
+                   setFlowSelection(c, 'none');
+               }
+            });
+            setFlowSelection(code, 'full');
+        } else {
+            setFlowSelection(code, 'none');
+        }
         return;
     }
     setFlowSelection(code, selection);
@@ -71,6 +76,7 @@ const Step2Flows: React.FC = () => {
     );
 
     if (currentComb.option.type === 'select_one_full') {
+       // Must have exactly one other flow selected as FULL
        const match = otherFlows.find(([code, sel]) =>
          currentComb.option.allowedCodes?.includes(code) && sel === 'full'
        );
@@ -93,34 +99,37 @@ const Step2Flows: React.FC = () => {
 
   // Helper to determine if an option should be disabled
   const isOptionDisabled = (code: string, type: 'full' | 'half') => {
-      if (!currentComb || currentComb.option.type !== 'any_ge_half') return false;
+      // 1. Logic for "Any GE Half" (Select at least 1/2)
+      if (currentComb && currentComb.option.type === 'any_ge_half') {
+          const requiredCodes = Object.keys(currentComb.required);
+          const otherFlows = Object.entries(flowSelections).filter(([c, s]) =>
+            !requiredCodes.includes(c) && s !== 'none'
+          );
 
-      const requiredCodes = Object.keys(currentComb.required);
-      const otherFlows = Object.entries(flowSelections).filter(([c, s]) =>
-        !requiredCodes.includes(c) && s !== 'none'
-      );
+          const currentSel = flowSelections[code];
+          const others = otherFlows.filter(([c]) => c !== code);
 
-      // Current state counts (excluding self if selected)
-      const others = otherFlows.filter(([c]) => c !== code);
+          const fullCount = others.filter(([, s]) => s === 'full').length;
+          const halfCount = others.filter(([, s]) => s === 'half').length;
 
-      const fullCount = others.filter(([, s]) => s === 'full').length;
-      const halfCount = others.filter(([, s]) => s === 'half').length;
-
-      // Rules:
-      // Max 1 Full OR Max 2 Halves.
-      // Can't mix Full and Half (unless it's the SAME flow? No, "Full" implies "Half" is irrelevant/replaced).
-
-      if (type === 'full') {
-          // Can select Full if:
-          // 0 Fulls AND 0 Halves exist elsewhere.
-          return fullCount > 0 || halfCount > 0;
+          if (type === 'full') {
+              // Can select Full if 0 Fulls AND 0 Halves exist elsewhere
+              return fullCount > 0 || halfCount > 0;
+          }
+          if (type === 'half') {
+              // Can select Half if 0 Fulls exist AND < 2 Halves exist elsewhere
+              return fullCount > 0 || halfCount >= 2;
+          }
       }
 
-      if (type === 'half') {
-          // Can select Half if:
-          // 0 Fulls exist elsewhere.
-          // AND < 2 Halves exist elsewhere.
-          return fullCount > 0 || halfCount >= 2;
+      // 2. Logic for "Select One Full" (from allowed list)
+      if (currentComb && currentComb.option.type === 'select_one_full') {
+           // Only allow selecting FULL
+           if (type === 'half') return true;
+
+           // If another is already selected, disabling isn't strictly necessary as logic handles switch
+           // but we can disable strictly if desired. Here we allow switch.
+           return false;
       }
 
       return false;
@@ -183,7 +192,7 @@ const Step2Flows: React.FC = () => {
             <span className="text-[10px] font-bold px-3 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full shadow-sm">Βήμα 2/3</span>
           </div>
 
-          <div className={`grid grid-cols-1 ${currentComb.option.type === 'any_ge_half' ? 'lg:grid-cols-[1fr_1fr_2fr]' : 'sm:grid-cols-3'} gap-6`}>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_2fr] gap-6">
              {/* Required Flows */}
              {Object.entries(currentComb.required).map(([code, sel]) => (
                <div key={code} className="p-5 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-200 flex flex-col h-full shadow-sm relative overflow-hidden group">
@@ -206,87 +215,66 @@ const Step2Flows: React.FC = () => {
                    Επιπλεον Επιλογη
                  </span>
 
-                 {currentComb.option.type === 'any_ge_half' ? (
-                   <div className="flex-1 flex flex-col">
-                      <div className="text-xs text-indigo-900 font-semibold mb-4 bg-white/60 p-2 rounded-lg border border-indigo-100/50">
-                         Επιλέξτε: <span className="text-indigo-700">1 Ολόκληρη</span> ή <span className="text-indigo-700">1 Μισή</span> ή <span className="text-indigo-700">2 Μισές</span>
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto max-h-[300px] pr-1 custom-scrollbar">
-                         {getAvailableFlows(currentComb).map(code => {
-                            const selection = flowSelections[code] || 'none';
-                            const isFullOnly = ['I', 'O'].includes(code);
-
-                            const disabledFull = isOptionDisabled(code, 'full');
-                            const disabledHalf = isOptionDisabled(code, 'half');
-
-                            return (
-                               <div key={code} className={`p-3 rounded-xl border transition-all duration-200 ${
-                                   selection !== 'none'
-                                   ? 'bg-white border-indigo-500 shadow-md ring-2 ring-indigo-100 scale-[1.02]'
-                                   : 'bg-white/70 border-indigo-100 hover:border-indigo-300 hover:bg-white'
-                               }`}>
-                                   <div className="font-bold text-xs text-gray-800 mb-2 text-center truncate" title={FLOW_NAMES[code]}>
-                                     {getGreekName(code)}
-                                   </div>
-                                   <div className="flex gap-1.5 justify-center">
-                                       {!isFullOnly && (
-                                            <button
-                                                disabled={disabledHalf}
-                                                onClick={() => handleOtherFlowChange(code, selection === 'half' ? 'none' : 'half')}
-                                                className={`px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all border w-10 ${
-                                                    selection === 'half'
-                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                                                    : disabledHalf
-                                                        ? 'bg-gray-100 text-gray-300 border-gray-100 cursor-not-allowed'
-                                                        : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-400 hover:text-indigo-600'
-                                                }`}
-                                            >
-                                                ½
-                                            </button>
-                                       )}
-                                       <button
-                                           disabled={disabledFull}
-                                           onClick={() => handleOtherFlowChange(code, selection === 'full' ? 'none' : 'full')}
-                                           className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${
-                                              selection === 'full'
-                                              ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
-                                              : disabledFull
-                                                  ? 'bg-gray-100 text-gray-300 border-gray-100 cursor-not-allowed'
-                                                  : 'bg-white text-gray-600 border-gray-200 hover:border-purple-400 hover:text-purple-600'
-                                           }`}
-                                       >
-                                           Full
-                                       </button>
-                                   </div>
-                               </div>
-                            );
-                         })}
-                      </div>
-                   </div>
-                 ) : (
-                   <div className="flex flex-col justify-center h-full">
-                     <label className="block text-xs font-bold text-gray-700 mb-2">
-                       Επιλέξτε μία ροή:
-                     </label>
-                     <select
-                       className="w-full p-3 bg-white border border-indigo-200 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none shadow-sm transition-shadow cursor-pointer hover:border-indigo-400"
-                       onChange={(e) => {
-                          const [code, type] = e.target.value.split(':');
-                          if (code) handleOtherFlowChange(code, type as FlowSelection);
-                       }}
-                       value={
-                          getAllowedFlows(currentComb).find(c => flowSelections[c] === 'full')
-                          ? `${getAllowedFlows(currentComb).find(c => flowSelections[c] === 'full')}:full`
-                          : ''
+                 <div className="flex-1 flex flex-col">
+                    <div className="text-xs text-indigo-900 font-semibold mb-4 bg-white/60 p-2 rounded-lg border border-indigo-100/50">
+                       {currentComb.option.type === 'any_ge_half'
+                         ? <span>Επιλέξτε: <span className="text-indigo-700">1 Ολόκληρη</span> ή <span className="text-indigo-700">1 Μισή</span> ή <span className="text-indigo-700">2 Μισές</span></span>
+                         : <span>Επιλέξτε: <span className="text-indigo-700">1 Ολόκληρη</span> από τις διαθέσιμες</span>
                        }
-                     >
-                       <option value="" disabled>-- Επιλογή --</option>
-                       {getAllowedFlows(currentComb).map(code => (
-                         <option key={code} value={`${code}:full`}>{getGreekName(code)} (Ολόκληρη)</option>
-                       ))}
-                     </select>
-                   </div>
-                 )}
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto max-h-[300px] pr-1 custom-scrollbar">
+                       {(currentComb.option.type === 'select_one_full' ? getAllowedFlows(currentComb) : getAvailableFlows(currentComb)).map(code => {
+                          const selection = flowSelections[code] || 'none';
+                          const isFullOnly = ['I', 'O'].includes(code) || currentComb.option.type === 'select_one_full';
+
+                          const disabledFull = isOptionDisabled(code, 'full');
+                          const disabledHalf = isOptionDisabled(code, 'half');
+
+                          return (
+                             <div key={code} className={`p-3 rounded-xl border transition-all duration-200 ${
+                                 selection !== 'none'
+                                 ? 'bg-white border-indigo-500 shadow-md ring-2 ring-indigo-100 scale-[1.02]'
+                                 : 'bg-white/70 border-indigo-100 hover:border-indigo-300 hover:bg-white'
+                             }`}>
+                                 <div className="font-bold text-xs text-gray-800 mb-2 text-center truncate" title={FLOW_NAMES[code]}>
+                                   {getGreekName(code)}
+                                 </div>
+                                 <div className="flex gap-1.5 justify-center">
+                                     {!isFullOnly && (
+                                          <button
+                                              disabled={disabledHalf}
+                                              onClick={() => handleOtherFlowChange(code, selection === 'half' ? 'none' : 'half')}
+                                              className={`px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all border w-10 ${
+                                                  selection === 'half'
+                                                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                                                  : disabledHalf
+                                                      ? 'bg-gray-100 text-gray-300 border-gray-100 cursor-not-allowed'
+                                                      : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-400 hover:text-indigo-600'
+                                              }`}
+                                          >
+                                              ½
+                                          </button>
+                                     )}
+                                     <button
+                                         disabled={disabledFull}
+                                         onClick={() => handleOtherFlowChange(code, selection === 'full' ? 'none' : 'full')}
+                                         className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${
+                                            selection === 'full'
+                                            ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                                            : disabledFull
+                                                ? 'bg-gray-100 text-gray-300 border-gray-100 cursor-not-allowed'
+                                                : 'bg-white text-gray-600 border-gray-200 hover:border-purple-400 hover:text-purple-600'
+                                         }`}
+                                     >
+                                         Full
+                                     </button>
+                                 </div>
+                             </div>
+                          );
+                       })}
+                    </div>
+                 </div>
                </div>
              </div>
           </div>
