@@ -7,25 +7,22 @@ import { FLOW_RULES } from '../../data/flowRules';
 import { evaluateRules } from '../../utils/ruleEvaluator';
 import SemesterSection from './SemesterSection';
 
-// Consistent colors based on string hash or index
+// Revised color palette (yellow/orange focus as requested)
 const COLORS = [
-    'border-red-500 bg-red-50 text-red-900',
-    'border-orange-500 bg-orange-50 text-orange-900',
     'border-amber-500 bg-amber-50 text-amber-900',
-    'border-lime-600 bg-lime-50 text-lime-900',
-    'border-emerald-600 bg-emerald-50 text-emerald-900',
-    'border-cyan-600 bg-cyan-50 text-cyan-900',
-    'border-blue-600 bg-blue-50 text-blue-900',
-    'border-indigo-600 bg-indigo-50 text-indigo-900',
-    'border-violet-600 bg-violet-50 text-violet-900',
-    'border-fuchsia-600 bg-fuchsia-50 text-fuchsia-900',
-    'border-rose-600 bg-rose-50 text-rose-900'
+    'border-orange-500 bg-orange-50 text-orange-900',
+    'border-yellow-500 bg-yellow-50 text-yellow-900',
+    'border-lime-600 bg-lime-50 text-lime-900', // Keeping some distinct but warm/related
+    'border-red-500 bg-red-50 text-red-900',
+    'border-rose-500 bg-rose-50 text-rose-900',
+    'border-amber-600 bg-amber-100 text-amber-950',
+    'border-orange-600 bg-orange-100 text-orange-950'
 ];
 
 const Step3Courses: React.FC = () => {
   const { direction, flowSelections, selectedCourseIds, toggleCourse, setStep, lockedCourseIds } = useWizard();
 
-  // Manage Expanded State at Top Level to prevent resets/scroll jumps
+  // Manage Expanded State at Top Level
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
       '6-comp': true, '6-flow': true, '6-free': false,
       '7-comp': true, '7-flow': true, '7-free': false,
@@ -37,7 +34,6 @@ const Step3Courses: React.FC = () => {
       setExpandedSections(prev => ({ ...prev, [`${sem}-${section}`]: !prev[`${sem}-${section}`] }));
   }, []);
 
-  // Helper: Categorize Course
   const getCourseCategory = (course: typeof courses[0]) => {
     const flowSel = flowSelections[course.flow_code as string];
     if (flowSel && flowSel !== 'none') {
@@ -45,23 +41,17 @@ const Step3Courses: React.FC = () => {
         if (typeof rule === 'function') rule = rule(direction);
 
         const id = String(course.id);
-
-        // Fixed Compulsory
         if (rule?.compulsory?.includes(id)) return 'compulsory';
 
-        // Pool or Options (treat as Flow Elective)
         const inPool = rule?.pool?.includes(id);
         const inOptions = rule?.options?.some(opt => opt.includes(id));
 
         if (inPool || inOptions) return 'flow_elective';
-
-        // Fallback for flow courses not strictly in rules but having the code
         return 'flow_elective';
     }
     return 'free';
   };
 
-  // Group Courses
   const coursesBySemester = useMemo(() => {
     const grouped: Record<number, {
         compulsory: typeof courses,
@@ -102,32 +92,33 @@ const Step3Courses: React.FC = () => {
     return grouped;
   }, [flowSelections, direction, selectedCourseIds]);
 
-  // Evaluated Rules
   const ruleStatuses = useMemo(() => {
     return evaluateRules(selectedCourseIds, flowSelections, direction);
   }, [selectedCourseIds, flowSelections, direction]);
 
-  // Consistent Rule Colors
   const ruleColors = useMemo(() => {
       const colors: Record<string, string> = {};
       ruleStatuses.forEach((r, idx) => {
-          // Assign color based on index to ensure distinctness
           colors[r.ruleId] = COLORS[idx % COLORS.length];
       });
       return colors;
-  }, [ruleStatuses.length]); // Re-calc only if number of rules changes (which is rare for a set direction/flow)
+  }, [ruleStatuses.length]);
 
-  // Validation Warnings
   const generalWarnings = useMemo(() => {
     const selected = courses.filter(c => selectedCourseIds.includes(String(c.id)));
     return validateSelection(selected, direction, flowSelections);
   }, [selectedCourseIds, flowSelections, direction]);
 
+  // Sidebar Warnings: Exclude ">7 courses" warning
+  const sidebarWarnings = useMemo(() => {
+      return generalWarnings.filter(w => !w.includes('Υπέρβαση ορίου μαθημάτων') && !w.includes('>7'));
+  }, [generalWarnings]);
+
   const isComplete = generalWarnings.length === 0;
 
-  // Stats for Sidebar
+  // Revised Sidebar Stats: Show Remaining
   const flowStats = useMemo(() => {
-      const stats: Record<string, { compRem: number, flowRem: number, freeRem: number, totalReq: number }> = {};
+      const stats: Record<string, { compRem: number, flowRem: number, totalReq: number, totalRem: number }> = {};
 
       Object.entries(flowSelections).forEach(([code, sel]) => {
           if (sel === 'none') return;
@@ -135,26 +126,20 @@ const Step3Courses: React.FC = () => {
           const targetComp = sel === 'full' ? 4 : 3;
 
           const selectedInFlow = courses.filter(c => c.flow_code === code && selectedCourseIds.includes(String(c.id)));
+
           const compSelected = selectedInFlow.filter(c => getCourseCategory(c) === 'compulsory').length;
+          // Note: "flow_elective" might also count towards "compulsory" if using pool logic in `ruleEngine`.
+          // Simplified logic here: Total selected in flow vs Target.
+
+          const totalSelected = selectedInFlow.length;
 
           stats[code] = {
-              compRem: Math.max(0, targetComp - compSelected),
-              flowRem: 0, // Simplified for UI
-              freeRem: 0,
-              totalReq: targetTotal
+              compRem: Math.max(0, targetComp - compSelected), // Approximation
+              flowRem: 0,
+              totalReq: targetTotal,
+              totalRem: Math.max(0, targetTotal - totalSelected)
           };
       });
-
-      // Free Stats
-      let totalReqSum = 0;
-      Object.values(stats).forEach(s => totalReqSum += s.totalReq);
-
-      // Calculate max free courses allowed (23 - flow reqs)
-      // Actually rule says: Max 5 free courses.
-      // But also total 23.
-      // 14 (Full+Full) + X.
-      // This logic is handled in ruleEngine.
-      // Here we just show "Selected / Max".
 
       return stats;
   }, [selectedCourseIds, flowSelections]);
@@ -264,7 +249,7 @@ const Step3Courses: React.FC = () => {
                     const greekKey = FLOW_NAMES[key]?.replace(/Flow |Ροή /g, '') || key;
                     const isFlow = key !== 'Free';
 
-                    if (!isFlow) return null; // Handle free separately if needed, or included
+                    if (!isFlow) return null;
 
                     return (
                         <div key={key} className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow">
@@ -275,13 +260,9 @@ const Step3Courses: React.FC = () => {
                                 </span>
                             </div>
                             <div className="flex gap-2">
-                                <div className="flex-1 bg-blue-50 rounded-lg p-2 text-center border border-blue-100">
-                                    <div className="text-lg font-black text-blue-600 leading-none">{stat.compRem}</div>
-                                    <div className="text-[9px] font-bold text-blue-400 uppercase mt-1">Υποχρ.</div>
-                                </div>
-                                <div className="flex-1 bg-purple-50 rounded-lg p-2 text-center border border-purple-100">
-                                    <div className="text-lg font-black text-purple-600 leading-none">{Math.max(0, stat.totalReq - stat.compRem)}</div>
-                                    <div className="text-[9px] font-bold text-purple-400 uppercase mt-1">Συνολο</div>
+                                <div className="flex-1 bg-orange-50 rounded-lg p-2 text-center border border-orange-100">
+                                    <div className="text-lg font-black text-orange-600 leading-none">{stat.totalRem}</div>
+                                    <div className="text-[9px] font-bold text-orange-400 uppercase mt-1">Απομενουν</div>
                                 </div>
                             </div>
                         </div>
@@ -289,14 +270,14 @@ const Step3Courses: React.FC = () => {
                 })}
             </div>
 
-            {generalWarnings.length > 0 && (
+            {sidebarWarnings.length > 0 && (
               <div className="p-4 bg-orange-50/80 border border-orange-200 rounded-xl mb-6 backdrop-blur-sm">
                  <h4 className="font-bold text-orange-900 mb-3 text-xs uppercase flex items-center gap-2 tracking-wider">
                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                    Εκκρεμοτητες
                  </h4>
                  <ul className="text-xs text-orange-800 space-y-2 list-disc list-inside font-medium">
-                   {generalWarnings.map((w, idx) => (
+                   {sidebarWarnings.map((w, idx) => (
                      <li key={idx} className="leading-snug opacity-90">{w}</li>
                    ))}
                  </ul>

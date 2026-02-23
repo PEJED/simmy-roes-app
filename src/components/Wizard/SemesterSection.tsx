@@ -38,12 +38,13 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
     toggleSection
 }) => {
 
-    const isOverLimit = data.totalSelected > 7;
+    // Updated Logic: >12 is the only strict warning for badge
+    const isOverLimit = data.totalSelected > 12;
     const isHardLimit = data.totalSelected >= 12;
 
     const isOpen = (sec: string) => !!expandedSections[`${semester}-${sec}`];
 
-    const renderCourseGrid = (courses: Course[], sectionBlocked: boolean) => (
+    const renderCourseGrid = (courses: Course[]) => (
         <div className="p-4 bg-white grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-300">
             {courses.map(c => {
                 const id = String(c.id);
@@ -56,18 +57,14 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                 let extraClass = "";
 
                 // Highlight Active Rules
-                // Only highlight if rule is NOT met (yellow)
                 const activeRule = semRules.find(r => !r.isMet && r.involvedCourseIds.includes(id));
                 if (activeRule) {
                     const colorClass = ruleColors[activeRule.ruleId] || 'border-yellow-400';
-                    // Extract color parts if needed or just use border
-                    // ruleColors strings are like 'border-red-500 bg-red-50 ...'
-                    // We need a ring or border on the card.
-                    // Let's use the border color from the class string.
-                    // Just add the whole class string to a wrapper or apply ring.
-                    // Simpler: Use a ring based on the color name.
-                    // Parsing the color might be brittle. Let's just use a standard highlight if active.
-                    extraClass = `ring-2 ring-offset-2 ${colorClass.split(' ')[0].replace('border-', 'ring-')}`;
+                    // Pass color to card. Assuming 'ring-2' + color classes work
+                    // Extract color parts: 'border-amber-500 bg-amber-50 text-amber-900'
+                    // We want the border color as ring color.
+                    const ringColor = colorClass.split(' ').find(cls => cls.startsWith('border-'))?.replace('border-', 'ring-') || 'ring-yellow-400';
+                    extraClass = `ring-2 ring-offset-2 ${ringColor}`;
                 }
 
                 if (lockedCourseIds.includes(id)) {
@@ -80,11 +77,6 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                     } else if (blockingRule) {
                         disabled = true;
                         tooltip = `Κανόνας ολοκληρώθηκε: ${blockingRule.description}`;
-                    } else if (sectionBlocked) {
-                         disabled = true;
-                         tooltip = "Υπέρβαση ορίου μαθημάτων (>7). Προσοχή!";
-                         // Don't disable strictly for >7 warning, just warn.
-                         disabled = false;
                     }
                 }
 
@@ -115,19 +107,17 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                     <h3 className="text-xl font-black text-gray-800 tracking-tight">Εξάμηνο</h3>
                 </div>
                 <div className="flex items-center gap-3">
-                    {isOverLimit && (
-                        <span
-                            title="Προσοχή: Η επιλογή άνω των 7 μαθημάτων επιτρέπεται μόνο υπό προϋποθέσεις Μ.Ο."
-                            className="hidden sm:flex text-[10px] font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full border border-orange-100 items-center gap-1.5 uppercase tracking-wide cursor-help"
-                        >
+                    {/* Only show Red Warning if >12 */}
+                    {data.totalSelected > 12 && (
+                        <span className="flex text-[10px] font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-full border border-red-100 items-center gap-1.5 uppercase tracking-wide">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                            &gt;7 Μαθηματα
+                            &gt;12 Μαθηματα
                         </span>
                     )}
-                    <div className={`flex flex-col items-end px-3 py-1 rounded-lg border ${data.totalSelected >= 12 ? 'bg-red-50 border-red-100' : 'bg-white border-gray-200'}`}>
-                        <span className={`text-xs font-bold uppercase tracking-wider ${data.totalSelected >= 12 ? 'text-red-600' : 'text-gray-400'}`}>Επιλογες</span>
-                        <span className={`text-lg font-black leading-none ${data.totalSelected >= 12 ? 'text-red-700' : 'text-gray-800'}`}>
-                           {data.totalSelected} <span className="text-gray-400 text-sm font-medium">/ 12</span>
+                    <div className="flex flex-col items-end px-3 py-1">
+                        <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Αριθμος Μαθηματων</span>
+                        <span className={`text-lg font-black leading-none ${data.totalSelected > 12 ? 'text-red-600' : 'text-gray-800'}`}>
+                           {data.totalSelected}
                         </span>
                     </div>
                 </div>
@@ -139,11 +129,8 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                     <div className="p-4 space-y-3">
                          {semRules.map(rule => {
                             const greekFlow = FLOW_NAMES[rule.flowCode]?.replace(/Flow |Ροή /g, '') || rule.flowCode;
-
-                            // ruleColors[ruleId] gives "border-red-500 bg-red-50 text-red-900"
                             const colorClasses = ruleColors[rule.ruleId] || 'border-yellow-500 bg-yellow-50 text-yellow-900';
 
-                            // If met, override with green/success style
                             const finalClass = rule.isMet
                                 ? 'bg-emerald-50 border-emerald-500 text-emerald-900'
                                 : colorClasses;
@@ -232,14 +219,21 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                 )}
             </div>
 
-            {/* Footer Stats */}
+            {/* Footer Stats - Updated Layout */}
             <div className="bg-gray-50 border-t border-gray-200 p-4 flex flex-wrap gap-4 items-center justify-between text-xs font-medium text-gray-500 rounded-b-2xl">
+                {/* Left: Total Courses */}
+                <div className="flex items-center gap-2">
+                    <span className="uppercase tracking-widest text-[10px] font-bold text-gray-400">Συνολο Μαθηματων</span>
+                    <span className="bg-gray-800 text-white px-2.5 py-1 rounded-lg font-bold text-sm shadow-sm">{data.totalSelected}</span>
+                </div>
+
+                {/* Right: Hours (Theory, Lab) */}
                 <div className="flex gap-6 items-center">
                     <div className="flex items-center gap-2" title="Ώρες Θεωρίας">
                         <span className="p-1.5 bg-white rounded-md border border-gray-200 shadow-sm text-blue-600">
                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                         </span>
-                        <span>Διδασκαλία: <strong className="text-gray-800 text-sm ml-1">{data.totalLectureHours}</strong> ω</span>
+                        <span>Θεωρία: <strong className="text-gray-800 text-sm ml-1">{data.totalLectureHours}</strong> ω</span>
                     </div>
                     <div className="flex items-center gap-2" title="Ώρες Εργαστηρίου">
                         <span className="p-1.5 bg-white rounded-md border border-gray-200 shadow-sm text-purple-600">
@@ -247,10 +241,6 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                         </span>
                         <span>Εργαστήριο: <strong className="text-gray-800 text-sm ml-1">{data.totalLabHours}</strong> ω</span>
                     </div>
-                </div>
-                <div className="flex items-center gap-2 pl-6 border-l border-gray-200">
-                    <span className="uppercase tracking-widest text-[10px] font-bold text-gray-400">Συνολο</span>
-                    <span className="bg-gray-800 text-white px-2.5 py-1 rounded-lg font-bold text-sm shadow-sm">{data.totalECTS} ECTS</span>
                 </div>
             </div>
         </div>

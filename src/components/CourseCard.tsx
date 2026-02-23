@@ -40,18 +40,20 @@ const CourseCard: React.FC<CourseCardProps> = memo(({ course, isSelected, onTogg
       flowDisplayName = FLOW_NAMES[course.flow_code];
   }
 
+  // Ensure passed className (for warning rings) takes precedence or merges well
+  const containerClasses = `
+    relative bg-white rounded-xl shadow-sm border transition-all duration-200 hover:shadow-md h-full flex flex-col justify-between group
+    ${isSelected
+      ? 'border-green-500 ring-2 ring-green-500 ring-opacity-20 shadow-green-100'
+      : 'border-gray-200 hover:border-blue-400'
+    }
+    ${isDisabled ? 'opacity-70 bg-gray-50 grayscale-[0.5]' : ''}
+    ${className || ''}
+  `;
+
   return (
     <>
-      <div
-        className={`relative bg-white rounded-xl shadow-sm border transition-all duration-200 hover:shadow-md h-full flex flex-col justify-between group
-          ${isSelected
-            ? 'border-green-500 ring-2 ring-green-500 ring-opacity-20 shadow-green-100'
-            : 'border-gray-200 hover:border-blue-400'
-          }
-          ${isDisabled ? 'opacity-70 bg-gray-50 grayscale-[0.5]' : ''}
-          ${className || ''}
-        `}
-      >
+      <div className={containerClasses}>
         {/* Clickable Area for Details */}
         <div
            className="p-4 cursor-pointer flex-grow flex flex-col"
