@@ -18,14 +18,33 @@ const FREE_FLOWS = ['M', 'F'];
 const NON_FLOW = 'G';
 const HUMANITIES = 'K';
 
-export const validateSelection = (
+export interface DetailedStats {
+    freeCount: number;
+    humanitiesCount: number;
+    nonFlowCount: number;
+    warnings: string[];
+    flowStats: Record<string, {
+        compulsorySelected: number;
+        totalSelected: number;
+        requiredTotal: number;
+        requiredCompulsory: number;
+        isComplete: boolean;
+        missingCompulsory: number;
+        missingTotal: number;
+    }>;
+}
+
+export const calculateDetailedStats = (
     selectedCourses: Course[],
     direction: Direction | null,
     flowSelections: Record<string, FlowSelection>
-): string[] => {
+): DetailedStats => {
     const warnings: string[] = [];
     const selectedIds = new Set(selectedCourses.map(c => String(c.id)));
     const totalSelectedCount = selectedCourses.length;
+
+    // Stats per flow
+    const flowStats: DetailedStats['flowStats'] = {};
 
     // --- 0. Total Courses Check ---
     if (totalSelectedCount !== 23) {
@@ -40,6 +59,8 @@ export const validateSelection = (
     // --- 2. Check Flow Requirements (Strict Counts) ---
     activeFlows.forEach(flowCode => {
         const selection = flowSelections[flowCode];
+        if (selection === 'none') return;
+
         const isFull = selection === 'full';
         const isHalf = selection === 'half';
 
@@ -72,9 +93,6 @@ export const validateSelection = (
         // A course counts as compulsory if marked in data OR listed in FLOW_RULES (compulsory list or pool)
         let isCompulsory = (c: Course) => c.is_flow_compulsory;
 
-        // Ensure selection is valid key for FLOW_RULES (exclude 'none')
-        if (selection === 'none') return;
-
         const rule = FLOW_RULES[flowCode]?.[selection];
         const ruleObj = typeof rule === 'function' ? rule(direction) : rule;
 
@@ -90,9 +108,13 @@ export const validateSelection = (
 
         const compulsoryCount = flowCourses.filter(isCompulsory).length;
 
+        // Store Stats
+        let isComplete = true;
+
         // Check Compulsory Count
         if (compulsoryCount < reqCompulsory) {
             warnings.push(`Ροή ${flowCode} (${isFull ? 'Ολόκληρη' : 'Μισή'}): Απαιτούνται τουλάχιστον ${reqCompulsory} υποχρεωτικά μαθήματα (Επιλέξατε: ${compulsoryCount}).`);
+            isComplete = false;
         }
 
         // Check Total Count (Strict Equality)
@@ -103,6 +125,7 @@ export const validateSelection = (
              } else {
                  warnings.push(`Ροή ${flowCode} (${typeStr}): Έχετε επιλέξει ${totalCount} μαθήματα. Το όριο είναι ${reqTotal}. Τα επιπλέον δεν προσμετρώνται ως ελεύθερα.`);
              }
+             isComplete = false;
         }
 
         // Check Options from FLOW_RULES (e.g. "One of A or B")
@@ -111,9 +134,20 @@ export const validateSelection = (
                 const hasOne = optGroup.some((id: string) => selectedIds.has(id));
                 if (!hasOne) {
                     warnings.push(`Ροή ${flowCode}: Πρέπει να επιλέξετε ένα από τα μαθήματα της ομάδας επιλογής ${idx + 1}.`);
+                    isComplete = false;
                 }
             });
         }
+
+        flowStats[flowCode] = {
+            compulsorySelected: compulsoryCount,
+            totalSelected: totalCount,
+            requiredTotal: reqTotal,
+            requiredCompulsory: reqCompulsory,
+            isComplete,
+            missingCompulsory: Math.max(0, reqCompulsory - compulsoryCount),
+            missingTotal: Math.max(0, reqTotal - totalCount)
+        };
     });
 
     // --- 3. Global Limits ---
@@ -174,5 +208,19 @@ export const validateSelection = (
         }
     });
 
-    return warnings;
+    return {
+        warnings,
+        freeCount,
+        humanitiesCount,
+        nonFlowCount,
+        flowStats
+    };
+};
+
+export const validateSelection = (
+    selectedCourses: Course[],
+    direction: Direction | null,
+    flowSelections: Record<string, FlowSelection>
+): string[] => {
+    return calculateDetailedStats(selectedCourses, direction, flowSelections).warnings;
 };

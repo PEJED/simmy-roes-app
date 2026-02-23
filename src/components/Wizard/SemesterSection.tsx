@@ -24,6 +24,7 @@ interface SemesterSectionProps {
     ruleColors: Record<string, string>;
     expandedSections: Record<string, boolean>;
     toggleSection: (sem: number, section: string) => void;
+    satisfiedFlows?: Set<string>; // New Prop
 }
 
 const SemesterSection: React.FC<SemesterSectionProps> = memo(({
@@ -35,7 +36,8 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
     toggleCourse,
     ruleColors,
     expandedSections,
-    toggleSection
+    toggleSection,
+    satisfiedFlows = new Set() // Default empty set
 }) => {
 
     // Updated Logic: >12 is the only strict warning for badge
@@ -57,13 +59,17 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
 
                 // Highlight Active Rules (Colored Border/Ring Logic)
                 const activeRule = semRules.find(r => !r.isMet && r.involvedCourseIds.includes(id));
+
                 if (activeRule) {
+                    // Priority 1: Active Warning (Red/Orange/etc)
                     const colorClass = ruleColors[activeRule.ruleId] || 'border-yellow-400';
                     const ringColor = colorClass.split(' ').find(cls => cls.startsWith('border-'))?.replace('border-', 'ring-') || 'ring-yellow-400';
                     // Pass ring and border color.
-                    // Note: 'ring' creates an outer glow. 'border' is the actual border.
-                    // We apply both to be safe and visible.
                     extraClass = `ring-2 ring-offset-2 ${ringColor}`;
+                } else if (isSelected && c.flow_code && satisfiedFlows.has(c.flow_code)) {
+                    // Priority 2: Satisfied Flow (Green)
+                    // Only apply if selected and flow is satisfied
+                    extraClass = `ring-2 ring-offset-2 ring-green-500 border-green-500`;
                 }
 
                 if (lockedCourseIds.includes(id)) {
@@ -106,11 +112,16 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                     <h3 className="text-xl font-black text-gray-800 tracking-tight">Εξάμηνο</h3>
                 </div>
                 <div className="flex items-center gap-3">
-                    {/* Only show Red Warning if >12 */}
-                    {data.totalSelected > 12 && (
+                    {/* Show Red Warning if >12, Orange if >7 */}
+                    {data.totalSelected > 12 ? (
                         <span className="flex text-[10px] font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-full border border-red-100 items-center gap-1.5 uppercase tracking-wide">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                             &gt;12 Μαθηματα
+                        </span>
+                    ) : data.totalSelected > 7 && (
+                        <span className="flex text-[10px] font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full border border-orange-100 items-center gap-1.5 uppercase tracking-wide">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                            &gt;7 Μαθηματα
                         </span>
                     )}
                     <div className="flex flex-col items-end px-3 py-1">

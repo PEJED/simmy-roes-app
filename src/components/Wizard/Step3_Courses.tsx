@@ -2,7 +2,7 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { useWizard } from '../../context/WizardContext';
 import { courses } from '../../data/courses';
 import { FLOW_NAMES } from '../../utils/flowValidation';
-import { validateSelection } from '../../utils/ruleEngine';
+import { calculateDetailedStats } from '../../utils/ruleEngine';
 import { FLOW_RULES } from '../../data/flowRules';
 import { evaluateRules } from '../../utils/ruleEvaluator';
 import SemesterSection from './SemesterSection';
@@ -104,10 +104,13 @@ const Step3Courses: React.FC = () => {
       return colors;
   }, [ruleStatuses.length]);
 
-  const generalWarnings = useMemo(() => {
+  // Use the new centralized stats calculation
+  const detailedStats = useMemo(() => {
     const selected = courses.filter(c => selectedCourseIds.includes(String(c.id)));
-    return validateSelection(selected, direction, flowSelections);
+    return calculateDetailedStats(selected, direction, flowSelections);
   }, [selectedCourseIds, flowSelections, direction]);
+
+  const generalWarnings = detailedStats.warnings;
 
   // Sidebar Warnings: Exclude ">7 courses" warning
   const sidebarWarnings = useMemo(() => {
@@ -116,60 +119,16 @@ const Step3Courses: React.FC = () => {
 
   const isComplete = generalWarnings.length === 0;
 
-  // Revised Sidebar Stats: Show Remaining
-  const flowStats = useMemo(() => {
-      const stats: Record<string, { compRem: number, flowRem: number, totalReq: number, totalRem: number, elecRem: number }> = {};
-
-      Object.entries(flowSelections).forEach(([code, sel]) => {
-          if (sel === 'none') return;
-          const targetTotal = sel === 'full' ? 7 : 4;
-          const targetComp = sel === 'full' ? 4 : 3;
-
-          const selectedInFlow = courses.filter(c => c.flow_code === code && selectedCourseIds.includes(String(c.id)));
-
-          // Use more accurate "compulsory" detection based on rule definition
-          let rule = FLOW_RULES[code]?.[sel];
-          if (typeof rule === 'function') rule = rule(direction);
-
-          const compIds = new Set([
-              ...(rule?.compulsory || []),
-              // If pool required_count is high, maybe treat as compulsory?
-              // Usually compulsory means SPECIFIC courses.
-              // Pool means "N of these".
-              // The request says "remaining compulsory" and "remaining flow electives".
-              // "Compulsory" usually refers to the fixed ones.
-          ]);
-
-          const compSelected = selectedInFlow.filter(c =>
-              c.is_flow_compulsory || compIds.has(String(c.id))
-          ).length;
-
-          const totalSelected = selectedInFlow.length;
-
-          const compRem = Math.max(0, targetComp - compSelected);
-          const totalRem = Math.max(0, targetTotal - totalSelected);
-          // If we satisfy compulsory, remaining slots are electives.
-          // If we haven't satisfied compulsory, we assume we will fill them, leaving (Total - Comp) electives.
-          // Wait, simple logic:
-          // We need `targetTotal` courses. `targetComp` must be compulsory.
-          // Remaining `targetTotal - targetComp` are "flow electives" (can be free flow electives or extra compulsory).
-          // But user wants "Remaining Compulsory" and "Remaining Flow Elective".
-          // "Remaining Compulsory" = Max(0, TargetComp - SelectedComp)
-          // "Remaining Flow Elective" = Max(0, TotalRem - CompRem) (The rest of the slots)
-
-          const elecRem = Math.max(0, totalRem - compRem);
-
-          stats[code] = {
-              compRem,
-              flowRem: 0, // Deprecated key, kept for shape compatibility if needed
-              totalReq: targetTotal,
-              totalRem,
-              elecRem
-          };
+  // Identify satisfied flows for green borders
+  const satisfiedFlows = useMemo(() => {
+      const set = new Set<string>();
+      Object.entries(detailedStats.flowStats).forEach(([code, stats]) => {
+          if (stats.isComplete) {
+              set.add(code);
+          }
       });
-
-      return stats;
-  }, [selectedCourseIds, flowSelections, direction]);
+      return set;
+  }, [detailedStats]);
 
   const clearAllCourses = () => {
       const toRemove = selectedCourseIds.filter(id => !lockedCourseIds.includes(id));
@@ -231,6 +190,7 @@ const Step3Courses: React.FC = () => {
                        ruleColors={ruleColors}
                        expandedSections={expandedSections}
                        toggleSection={toggleSection}
+                       satisfiedFlows={satisfiedFlows}
                    />
                ) : null
            ))}
@@ -252,7 +212,7 @@ const Step3Courses: React.FC = () => {
 
             <h3 className="text-xl font-black text-gray-800 mb-6 pb-2 border-b border-gray-100">Σύνοψη</h3>
 
-            <div className="mb-8 p-6 bg-slate-900 rounded-2xl text-white shadow-lg relative overflow-hidden group">
+            <div className="mb-6 p-6 bg-slate-900 rounded-2xl text-white shadow-lg relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
                 <div className="relative z-10">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Συνολο Μαθηματων</div>
@@ -271,29 +231,63 @@ const Step3Courses: React.FC = () => {
                 </div>
             </div>
 
+            {/* General Stats (Free, Humanities, Non-Flow) */}
+            <div className="grid grid-cols-3 gap-2 mb-8">
+                 <div className="bg-gray-50 p-2 rounded-xl text-center border border-gray-100">
+                     <div className={`text-xl font-black leading-none ${detailedStats.freeCount > 5 ? 'text-red-600' : 'text-gray-800'}`}>
+                         {detailedStats.freeCount}
+                     </div>
+                     <div className="text-[9px] uppercase font-bold text-gray-400 mt-1">Ελευθερα</div>
+                     <div className="text-[9px] text-gray-300 font-medium">max 5</div>
+                 </div>
+                 <div className="bg-gray-50 p-2 rounded-xl text-center border border-gray-100">
+                     <div className={`text-xl font-black leading-none ${detailedStats.humanitiesCount > 1 ? 'text-red-600' : 'text-gray-800'}`}>
+                         {detailedStats.humanitiesCount}
+                     </div>
+                     <div className="text-[9px] uppercase font-bold text-gray-400 mt-1">Ανθρωπ.</div>
+                     <div className="text-[9px] text-gray-300 font-medium">max 1</div>
+                 </div>
+                 <div className="bg-gray-50 p-2 rounded-xl text-center border border-gray-100">
+                     <div className={`text-xl font-black leading-none ${detailedStats.nonFlowCount > 1 ? 'text-red-600' : 'text-gray-800'}`}>
+                         {detailedStats.nonFlowCount}
+                     </div>
+                     <div className="text-[9px] uppercase font-bold text-gray-400 mt-1">Εκτος Ροων</div>
+                     <div className="text-[9px] text-gray-300 font-medium">max 1</div>
+                 </div>
+            </div>
+
             <div className="space-y-4 mb-8">
-                {Object.entries(flowStats).map(([key, stat]) => {
+                {Object.entries(detailedStats.flowStats).map(([key, stat]) => {
                     const greekKey = FLOW_NAMES[key]?.replace(/Flow |Ροή /g, '') || key;
-                    const isFlow = key !== 'Free';
+                    const isFlow = true;
 
                     if (!isFlow) return null;
 
                     return (
-                        <div key={key} className="p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                        <div key={key} className={`p-4 bg-white border rounded-xl shadow-sm hover:shadow-md transition-all ${stat.isComplete ? 'border-green-200 bg-green-50/30' : 'border-gray-100'}`}>
                             <div className="flex justify-between items-center mb-3">
-                                <span className="font-bold text-gray-800 text-sm">Ροή {greekKey}</span>
-                                <span className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full font-bold uppercase tracking-wider">
-                                    {stat.totalReq === 7 ? 'Ολοκληρη' : 'Μιση'}
+                                <span className="font-bold text-gray-800 text-sm flex items-center gap-2">
+                                    Ροή {greekKey}
+                                    {stat.isComplete && (
+                                        <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                    )}
+                                </span>
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${stat.isComplete ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                    {stat.requiredTotal === 7 ? 'Ολοκληρη' : 'Μιση'}
                                 </span>
                             </div>
                             <div className="flex gap-2">
-                                <div className="flex-1 bg-red-50 rounded-lg p-2 text-center border border-red-100">
-                                    <div className="text-lg font-black text-red-600 leading-none">{stat.compRem}</div>
-                                    <div className="text-[9px] font-bold text-red-400 uppercase mt-1" title="Υποχρεωτικά που απομένουν">Υποχ.</div>
+                                <div className={`flex-1 rounded-lg p-2 text-center border ${stat.missingCompulsory === 0 ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
+                                    <div className={`text-lg font-black leading-none ${stat.missingCompulsory === 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        {stat.missingCompulsory}
+                                    </div>
+                                    <div className={`text-[9px] font-bold uppercase mt-1 ${stat.missingCompulsory === 0 ? 'text-green-400' : 'text-red-400'}`} title="Υποχρεωτικά που απομένουν">Υποχ.</div>
                                 </div>
-                                <div className="flex-1 bg-orange-50 rounded-lg p-2 text-center border border-orange-100">
-                                    <div className="text-lg font-black text-orange-600 leading-none">{stat.elecRem}</div>
-                                    <div className="text-[9px] font-bold text-orange-400 uppercase mt-1" title="Κατ' επιλογήν που απομένουν">Επιλ.</div>
+                                <div className={`flex-1 rounded-lg p-2 text-center border ${stat.missingTotal === 0 ? 'bg-green-50 border-green-100' : 'bg-orange-50 border-orange-100'}`}>
+                                    <div className={`text-lg font-black leading-none ${stat.missingTotal === 0 ? 'text-green-600' : 'text-orange-600'}`}>
+                                        {Math.max(0, stat.missingTotal - stat.missingCompulsory)}
+                                    </div>
+                                    <div className={`text-[9px] font-bold uppercase mt-1 ${stat.missingTotal === 0 ? 'text-green-400' : 'text-orange-400'}`} title="Κατ' επιλογήν που απομένουν">Επιλ.</div>
                                 </div>
                             </div>
                         </div>
