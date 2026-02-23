@@ -55,14 +55,14 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                 let tooltip = "";
                 let extraClass = "";
 
-                // Highlight Active Rules
+                // Highlight Active Rules (Colored Border/Ring Logic)
                 const activeRule = semRules.find(r => !r.isMet && r.involvedCourseIds.includes(id));
                 if (activeRule) {
                     const colorClass = ruleColors[activeRule.ruleId] || 'border-yellow-400';
-                    // Pass color to card. Assuming 'ring-2' + color classes work
-                    // Extract color parts: 'border-amber-500 bg-amber-50 text-amber-900'
-                    // We want the border color as ring color.
                     const ringColor = colorClass.split(' ').find(cls => cls.startsWith('border-'))?.replace('border-', 'ring-') || 'ring-yellow-400';
+                    // Pass ring and border color.
+                    // Note: 'ring' creates an outer glow. 'border' is the actual border.
+                    // We apply both to be safe and visible.
                     extraClass = `ring-2 ring-offset-2 ${ringColor}`;
                 }
 

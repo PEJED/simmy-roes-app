@@ -12,7 +12,7 @@ const COLORS = [
     'border-amber-500 bg-amber-50 text-amber-900',
     'border-orange-500 bg-orange-50 text-orange-900',
     'border-yellow-500 bg-yellow-50 text-yellow-900',
-    'border-lime-600 bg-lime-50 text-lime-900', // Keeping some distinct but warm/related
+    'border-lime-600 bg-lime-50 text-lime-900',
     'border-red-500 bg-red-50 text-red-900',
     'border-rose-500 bg-rose-50 text-rose-900',
     'border-amber-600 bg-amber-100 text-amber-950',
@@ -118,7 +118,7 @@ const Step3Courses: React.FC = () => {
 
   // Revised Sidebar Stats: Show Remaining
   const flowStats = useMemo(() => {
-      const stats: Record<string, { compRem: number, flowRem: number, totalReq: number, totalRem: number }> = {};
+      const stats: Record<string, { compRem: number, flowRem: number, totalReq: number, totalRem: number, elecRem: number }> = {};
 
       Object.entries(flowSelections).forEach(([code, sel]) => {
           if (sel === 'none') return;
@@ -127,22 +127,49 @@ const Step3Courses: React.FC = () => {
 
           const selectedInFlow = courses.filter(c => c.flow_code === code && selectedCourseIds.includes(String(c.id)));
 
-          const compSelected = selectedInFlow.filter(c => getCourseCategory(c) === 'compulsory').length;
-          // Note: "flow_elective" might also count towards "compulsory" if using pool logic in `ruleEngine`.
-          // Simplified logic here: Total selected in flow vs Target.
+          // Use more accurate "compulsory" detection based on rule definition
+          let rule = FLOW_RULES[code]?.[sel];
+          if (typeof rule === 'function') rule = rule(direction);
+
+          const compIds = new Set([
+              ...(rule?.compulsory || []),
+              // If pool required_count is high, maybe treat as compulsory?
+              // Usually compulsory means SPECIFIC courses.
+              // Pool means "N of these".
+              // The request says "remaining compulsory" and "remaining flow electives".
+              // "Compulsory" usually refers to the fixed ones.
+          ]);
+
+          const compSelected = selectedInFlow.filter(c =>
+              c.is_flow_compulsory || compIds.has(String(c.id))
+          ).length;
 
           const totalSelected = selectedInFlow.length;
 
+          const compRem = Math.max(0, targetComp - compSelected);
+          const totalRem = Math.max(0, targetTotal - totalSelected);
+          // If we satisfy compulsory, remaining slots are electives.
+          // If we haven't satisfied compulsory, we assume we will fill them, leaving (Total - Comp) electives.
+          // Wait, simple logic:
+          // We need `targetTotal` courses. `targetComp` must be compulsory.
+          // Remaining `targetTotal - targetComp` are "flow electives" (can be free flow electives or extra compulsory).
+          // But user wants "Remaining Compulsory" and "Remaining Flow Elective".
+          // "Remaining Compulsory" = Max(0, TargetComp - SelectedComp)
+          // "Remaining Flow Elective" = Max(0, TotalRem - CompRem) (The rest of the slots)
+
+          const elecRem = Math.max(0, totalRem - compRem);
+
           stats[code] = {
-              compRem: Math.max(0, targetComp - compSelected), // Approximation
-              flowRem: 0,
+              compRem,
+              flowRem: 0, // Deprecated key, kept for shape compatibility if needed
               totalReq: targetTotal,
-              totalRem: Math.max(0, targetTotal - totalSelected)
+              totalRem,
+              elecRem
           };
       });
 
       return stats;
-  }, [selectedCourseIds, flowSelections]);
+  }, [selectedCourseIds, flowSelections, direction]);
 
   const clearAllCourses = () => {
       const toRemove = selectedCourseIds.filter(id => !lockedCourseIds.includes(id));
@@ -260,9 +287,13 @@ const Step3Courses: React.FC = () => {
                                 </span>
                             </div>
                             <div className="flex gap-2">
+                                <div className="flex-1 bg-red-50 rounded-lg p-2 text-center border border-red-100">
+                                    <div className="text-lg font-black text-red-600 leading-none">{stat.compRem}</div>
+                                    <div className="text-[9px] font-bold text-red-400 uppercase mt-1" title="Υποχρεωτικά που απομένουν">Υποχ.</div>
+                                </div>
                                 <div className="flex-1 bg-orange-50 rounded-lg p-2 text-center border border-orange-100">
-                                    <div className="text-lg font-black text-orange-600 leading-none">{stat.totalRem}</div>
-                                    <div className="text-[9px] font-bold text-orange-400 uppercase mt-1">Απομενουν</div>
+                                    <div className="text-lg font-black text-orange-600 leading-none">{stat.elecRem}</div>
+                                    <div className="text-[9px] font-bold text-orange-400 uppercase mt-1" title="Κατ' επιλογήν που απομένουν">Επιλ.</div>
                                 </div>
                             </div>
                         </div>
