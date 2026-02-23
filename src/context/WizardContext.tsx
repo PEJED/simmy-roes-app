@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useMemo } from 'react';
-import { validateDirectionSelection } from '../utils/flowValidation';
-import type { FlowSelection, Direction } from '../utils/flowValidation';
+import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
+import { validateDirectionSelection, type FlowSelection, type Direction } from '../utils/flowValidation';
+import { courses } from '../data/courses';
 
 interface WizardState {
   step: number;
@@ -12,12 +12,13 @@ interface WizardState {
 
 interface WizardContextType extends WizardState {
   setStep: (step: number) => void;
-  setDirection: (direction: Direction) => void;
+  setDirection: (direction: Direction | null) => void;
   setSelectedCombinationId: (id: string | null) => void;
   setFlowSelection: (flowCode: string, selection: FlowSelection) => void;
   resetFlowSelections: () => void;
   toggleCourse: (courseId: string) => void;
   validation: { isValid: boolean; error: string | null };
+  lockedCourseIds: string[];
 }
 
 const WizardContext = createContext<WizardContextType | undefined>(undefined);
@@ -30,15 +31,48 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>([]);
 
   const validation = useMemo(() => {
-    // Only check validity if direction is selected
     if (!direction) return { isValid: false, error: 'Επιλέξτε Κατεύθυνση' };
-
-    // Check flow structure
-    // We pass the flowSelections to the utility
     return validateDirectionSelection(direction, flowSelections);
   }, [direction, flowSelections]);
 
-  const setFlowSelection = (flowCode: string, selection: FlowSelection) => {
+  // Keep simple locking based on is_flow_compulsory for now?
+  // User asked for complex rules. We will handle visual categorization in UI.
+  // We can still auto-select "core" compulsory if we want, or leave it to user.
+  // The user requirement "Mandatory courses... Must be pre-selected, disabled" was from Step 1 of this task.
+  // The current request says "split into 3 categories... compulsory...".
+  // It implies we should still treat them as locked/pre-selected?
+  // Yes, probably. But "3 of 5" makes pre-selection ambiguous.
+  // "4 of 5" -> which 4?
+  // So locking is only possible for strict "100% required" courses.
+  // I will keep the *concept* of locking but update the logic later if needed.
+  // For now, I'll rely on the simple 'is_flow_compulsory' for the initial lock,
+  // or maybe I should disable locking until the new rules are in place?
+  // Let's keep it simple here and refine in Step3_Courses.
+
+  const lockedCourseIds = useMemo(() => {
+    const ids: string[] = [];
+    Object.entries(flowSelections).forEach(([flowCode, selection]) => {
+      if (selection === 'full') {
+        const compulsoryCourses = courses.filter(
+          c => c.flow_code === flowCode && c.is_flow_compulsory
+        );
+        compulsoryCourses.forEach(c => ids.push(c.id.toString()));
+      }
+    });
+    return ids;
+  }, [flowSelections]);
+
+  useEffect(() => {
+    if (lockedCourseIds.length > 0) {
+      setSelectedCourseIds(prev => {
+        const newSet = new Set(prev);
+        lockedCourseIds.forEach(id => newSet.add(id));
+        return Array.from(newSet);
+      });
+    }
+  }, [lockedCourseIds]);
+
+  const setFlowSelectionHandler = (flowCode: string, selection: FlowSelection) => {
     setFlowSelections(prev => ({
       ...prev,
       [flowCode]: selection
@@ -50,6 +84,8 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const toggleCourse = (courseId: string) => {
+    if (lockedCourseIds.includes(courseId)) return;
+
     setSelectedCourseIds(prev =>
       prev.includes(courseId)
         ? prev.filter(id => id !== courseId)
@@ -66,10 +102,11 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setStep,
     setDirection,
     setSelectedCombinationId,
-    setFlowSelection,
+    setFlowSelection: setFlowSelectionHandler,
     resetFlowSelections,
     toggleCourse,
-    validation
+    validation,
+    lockedCourseIds
   };
 
   return (

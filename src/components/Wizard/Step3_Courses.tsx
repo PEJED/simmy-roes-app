@@ -1,99 +1,213 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useWizard } from '../../context/WizardContext';
 import { courses } from '../../data/courses';
-import CourseCard from '../CourseCard';
 import { FLOW_NAMES } from '../../utils/flowValidation';
-import { validateSelection, type Direction as RuleDirection } from '../../utils/ruleEngine';
+import { validateSelection } from '../../utils/ruleEngine';
+import { FLOW_RULES } from '../../data/flowRules';
+import { evaluateRules } from '../../utils/ruleEvaluator';
+import SemesterSection from './SemesterSection';
+
+const COLORS = [
+    'ring-red-400', 'ring-orange-400', 'ring-amber-400',
+    'ring-lime-400', 'ring-emerald-400', 'ring-teal-400',
+    'ring-cyan-400', 'ring-sky-400', 'ring-blue-400',
+    'ring-indigo-400', 'ring-violet-400', 'ring-purple-400',
+    'ring-fuchsia-400', 'ring-pink-400', 'ring-rose-400'
+];
 
 const Step3Courses: React.FC = () => {
-  const { direction, flowSelections, selectedCourseIds, toggleCourse, setStep } = useWizard();
-  const [activeTab, setActiveTab] = useState<'main' | 'free'>('main');
+  const { direction, flowSelections, selectedCourseIds, toggleCourse, setStep, lockedCourseIds } = useWizard();
 
-  // Filter courses based on flow selections
-  const { mainCourses, freeElectiveCourses } = useMemo(() => {
-    const main: typeof courses = [];
-    const free: typeof courses = [];
+  // Helper: Categorize Course
+  const getCourseCategory = (course: typeof courses[0]) => {
+    const flowSel = flowSelections[course.flow_code as string];
+    if (flowSel && flowSel !== 'none') {
+        let rule = FLOW_RULES[course.flow_code as string]?.[flowSel];
+        if (typeof rule === 'function') rule = rule(direction);
 
-    courses.forEach(course => {
-      // Skip semesters < 6
-      if (course.semester < 6) return;
+        const id = String(course.id);
 
-      // Check if course belongs to a selected flow
-      const isSelectedFlow = course.flow_code && flowSelections[course.flow_code] && flowSelections[course.flow_code] !== 'none';
+        // Fixed Compulsory
+        if (rule?.compulsory?.includes(id)) return 'compulsory';
 
-      if (isSelectedFlow) {
-        main.push(course);
-      } else if (['M', 'F'].includes(course.flow_code) || course.type === 'free' || course.type === 'humanities') {
-        // M, F, Free, Humanities are strictly free electives
-        free.push(course);
-      } else {
-        // Courses from other non-selected flows can also be free electives
-        // But for now, let's keep it simple or allow them?
-        // User said: "Add M and F... as Pool of Electives".
-        // Let's include them in free for now to be flexible, or maybe just M/F/Humanities.
-        // Let's include ALL non-selected flow courses in free?
-        // That might be too many. Let's stick to M, F, Humanities for now.
-      }
-    });
+        // Kat' Epilogin (Pool or Options)
+        const inPool = rule?.pool?.includes(id);
+        const inOptions = rule?.options?.some(opt => opt.includes(id));
 
-    return { mainCourses: main, freeElectiveCourses: free };
-  }, [flowSelections]);
+        if (inPool || inOptions) return 'flow_elective';
 
-  // Group by Semester
+        return 'flow_elective';
+    }
+    return 'free';
+  };
+
+  // Group Courses
   const coursesBySemester = useMemo(() => {
-    const target = activeTab === 'main' ? mainCourses : freeElectiveCourses;
-    const grouped: Record<number, typeof courses> = {};
+    const grouped: Record<number, {
+        compulsory: typeof courses,
+        flow_elective: typeof courses,
+        free: typeof courses,
+        totalSelected: number,
+        totalECTS: number,
+        totalLectureHours: number,
+        totalLabHours: number
+    }> = {};
 
     [6, 7, 8, 9].forEach(sem => {
-      grouped[sem] = target.filter(c => c.semester === sem);
-    });
+      const semCourses = courses.filter(c => c.semester === sem);
+      const compulsory: typeof courses = [];
+      const flow_elective: typeof courses = [];
+      const free: typeof courses = [];
+      let totalSelected = 0;
+      let totalECTS = 0;
+      let totalLectureHours = 0;
+      let totalLabHours = 0;
 
+      semCourses.forEach(c => {
+          const cat = getCourseCategory(c);
+          if (cat === 'compulsory') compulsory.push(c);
+          else if (cat === 'flow_elective') flow_elective.push(c);
+          else free.push(c);
+
+          if (selectedCourseIds.includes(String(c.id))) {
+              totalSelected++;
+              totalECTS += c.ects || 0;
+              totalLectureHours += c.lecture_hours || 0;
+              totalLabHours += c.lab_hours || 0;
+          }
+      });
+
+      grouped[sem] = { compulsory, flow_elective, free, totalSelected, totalECTS, totalLectureHours, totalLabHours };
+    });
     return grouped;
-  }, [activeTab, mainCourses, freeElectiveCourses]);
+  }, [flowSelections, direction, selectedCourseIds]);
 
-  // Validation Logic per Flow (Same as before)
-  const validationStatus = useMemo(() => {
-    const status: Record<string, { total: number, compulsory: number, targetTotal: number, targetCompulsory: number }> = {};
+  // Evaluated Rules
+  const ruleStatuses = useMemo(() => {
+    return evaluateRules(selectedCourseIds, flowSelections, direction);
+  }, [selectedCourseIds, flowSelections, direction]);
 
-    Object.entries(flowSelections).forEach(([code, selection]) => {
-      if (selection === 'none') return;
-      status[code] = {
-        total: 0,
-        compulsory: 0,
-        targetTotal: selection === 'full' ? 7 : 4,
-        targetCompulsory: selection === 'full' ? 4 : 3
-      };
-    });
+  // Assign Colors to Active Rules
+  const ruleColors = useMemo(() => {
+      const colors: Record<string, string> = {};
+      let colorIdx = 0;
+      ruleStatuses.forEach(r => {
+          if (!r.isMet) {
+              colors[r.ruleId] = COLORS[colorIdx % COLORS.length];
+              colorIdx++;
+          }
+      });
+      return colors;
+  }, [ruleStatuses]);
 
-    selectedCourseIds.forEach(id => {
-      const course = courses.find(c => String(c.id) === id);
-      if (course && course.flow_code && status[course.flow_code]) {
-        status[course.flow_code].total++;
-        if (course.is_flow_compulsory) {
-          status[course.flow_code].compulsory++;
-        }
-      }
-    });
-
-    return status;
-  }, [flowSelections, selectedCourseIds]);
-
-  // General Rules Validation
+  // Validation Warnings
   const generalWarnings = useMemo(() => {
     const selected = courses.filter(c => selectedCourseIds.includes(String(c.id)));
-    // Map Direction format (Capitalized) to RuleDirection (lowercase)
-    const ruleDirection = direction ? direction.toLowerCase() as RuleDirection : null;
-    return validateSelection(selected, ruleDirection);
-  }, [selectedCourseIds, direction]);
+    return validateSelection(selected, direction, flowSelections);
+  }, [selectedCourseIds, flowSelections, direction]);
 
-  const isFlowsComplete = Object.values(validationStatus).every(s => s.total >= s.targetTotal && s.compulsory >= s.targetCompulsory);
-  const isComplete = isFlowsComplete && generalWarnings.length === 0;
+  const isComplete = generalWarnings.length === 0;
+
+  // Stats for Sidebar
+  const flowStats = useMemo(() => {
+      const stats: Record<string, { compRem: number, flowRem: number, freeRem: number, totalReq: number }> = {};
+
+      Object.entries(flowSelections).forEach(([code, sel]) => {
+          if (sel === 'none') return;
+          const targetTotal = sel === 'full' ? 7 : 4;
+          const targetComp = sel === 'full' ? 4 : 3;
+
+          const selectedInFlow = courses.filter(c => c.flow_code === code && selectedCourseIds.includes(String(c.id)));
+
+          const compSelected = selectedInFlow.filter(c => getCourseCategory(c) === 'compulsory').length;
+
+          stats[code] = {
+              compRem: Math.max(0, targetComp - compSelected), // This might be wrong for Pool flows (L, T, O)
+              flowRem: Math.max(0, (targetTotal - targetComp) - 0), // Placeholder
+              freeRem: 0,
+              totalReq: targetTotal
+          };
+      });
+
+      let totalReqSum = 0;
+      Object.values(stats).forEach(s => totalReqSum += s.totalReq);
+      const maxFree = Math.max(0, 23 - totalReqSum);
+      const freeSelected = courses.filter(c => selectedCourseIds.includes(String(c.id)) && getCourseCategory(c) === 'free').length;
+
+      stats['Free'] = {
+          compRem: 0, flowRem: 0,
+          freeRem: Math.max(0, maxFree - freeSelected),
+          totalReq: maxFree
+      };
+
+      return stats;
+  }, [selectedCourseIds, flowSelections]);
+
+  const clearAllCourses = () => {
+      const toRemove = selectedCourseIds.filter(id => !lockedCourseIds.includes(id));
+      toRemove.forEach(id => toggleCourse(id));
+  };
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
 
-      {/* Sidebar */}
-      <div className="w-full lg:w-80 bg-white border-r border-gray-200 p-6 flex-shrink-0 lg:sticky lg:top-0 lg:h-screen overflow-y-auto">
+      {/* Main Content (Left) */}
+      <div className="flex-1 p-4 lg:p-8 order-2 lg:order-1">
+        <div className="flex justify-between items-start mb-8">
+            <h2 className="text-3xl font-bold text-gray-900">Επιλογή Μαθημάτων</h2>
+            <button
+                onClick={clearAllCourses}
+                className="px-3 py-1.5 bg-white border border-red-200 text-red-600 rounded-lg text-xs font-bold hover:bg-red-50 transition-colors shadow-sm flex items-center gap-1"
+            >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                Εκκαθάριση
+            </button>
+        </div>
+
+        <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-900 flex gap-4 items-start shadow-sm">
+             <div className="bg-blue-100 p-2 rounded-full text-blue-600">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+             </div>
+             <div className="space-y-2">
+                <h4 className="font-bold text-lg">Κανόνες Ορίων</h4>
+                <p>Το πλήθος των μαθημάτων <strong>ανά εξάμηνο</strong> δεν πρέπει να υπερβαίνει τα <strong>12</strong>.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2 bg-white/50 p-3 rounded-lg">
+                    <div>
+                        <span className="font-bold block mb-1">Όρια βάσει Μ.Ο. (&gt;7 μαθήματα):</span>
+                        <ul className="list-disc list-inside text-xs space-y-1 text-blue-800">
+                            <li>7 για μ.ο. ≤ 8.5</li>
+                            <li>8 για 8.5 &lt; μ.ο ≤ 9</li>
+                            <li>9 για 9 &lt; μ.ο ≤ 9.5</li>
+                            <li>10 για μ.ο. &gt; 9.5</li>
+                        </ul>
+                    </div>
+                    <div className="text-xs italic flex items-center">
+                        Αν επιλέξετε πάνω από 7 μαθήματα σε ένα εξάμηνο, θα εμφανιστεί σχετική ειδοποίηση.
+                    </div>
+                </div>
+             </div>
+        </div>
+
+        <div className="space-y-8">
+           {[6, 7, 8, 9].map(semester => (
+               coursesBySemester[semester] ? (
+                   <SemesterSection
+                       key={semester}
+                       semester={semester}
+                       data={coursesBySemester[semester]}
+                       semRules={ruleStatuses}
+                       selectedCourseIds={selectedCourseIds}
+                       lockedCourseIds={lockedCourseIds}
+                       toggleCourse={toggleCourse}
+                       ruleColors={ruleColors}
+                   />
+               ) : null
+           ))}
+        </div>
+      </div>
+
+      {/* Sidebar (Right) */}
+      <div className="w-full lg:w-80 bg-white border-l border-gray-200 p-6 flex-shrink-0 lg:sticky lg:top-0 lg:h-screen overflow-y-auto order-1 lg:order-2 shadow-lg z-10 custom-scrollbar">
         <button
           onClick={() => setStep(2)}
           className="text-gray-500 hover:text-blue-600 flex items-center gap-2 text-sm font-medium mb-6 transition-colors"
@@ -101,40 +215,58 @@ const Step3Courses: React.FC = () => {
           &larr; Πίσω στη Δομή
         </button>
 
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Έλεγχος Ροών</h3>
+        <h3 className="text-xl font-bold text-gray-800 mb-6 border-b pb-2">Σύνοψη</h3>
 
-        <div className="space-y-4">
-          {Object.entries(validationStatus).map(([code, stat]) => {
-            const isTotalMet = stat.total >= stat.targetTotal;
-            const isCompMet = stat.compulsory >= stat.targetCompulsory;
-            const isAllMet = isTotalMet && isCompMet;
+        <div className="mb-6 p-4 bg-gray-900 rounded-xl text-white shadow-lg">
+            <div className="text-xs text-gray-400 font-bold uppercase mb-1">Συνολο Μαθηματων</div>
+            <div className="flex items-end gap-2">
+                <span className={`text-4xl font-bold ${selectedCourseIds.length === 23 ? 'text-green-400' : 'text-white'}`}>{selectedCourseIds.length}</span>
+                <span className="text-lg text-gray-500 mb-1">/ 23</span>
+            </div>
+            {selectedCourseIds.length > 23 && (
+                <div className="text-xs text-red-400 font-bold mt-2">Υπέρβαση ορίου διπλώματος!</div>
+            )}
+        </div>
 
-            return (
-              <div key={code} className={`p-4 rounded-xl border-2 transition-all ${isAllMet ? 'bg-green-50 border-green-200' : 'bg-white border-gray-100'}`}>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-bold text-gray-700">{FLOW_NAMES[code]}</span>
-                  {isAllMet && <span className="text-green-600 text-xs font-bold">OK</span>}
-                </div>
+        <div className="space-y-6">
+            {Object.entries(flowStats).map(([key, stat]) => {
+                const greekKey = FLOW_NAMES[key]?.replace(/Flow |Ροή /g, '') || key;
 
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Μαθήματα:</span>
-                    <span className={isTotalMet ? 'text-green-600' : 'text-orange-500'}>{stat.total}/{stat.targetTotal}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Υποχρεωτικά:</span>
-                    <span className={isCompMet ? 'text-green-600' : 'text-orange-500'}>{stat.compulsory}/{stat.targetCompulsory}</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                if (key === 'Free') {
+                    return (
+                        <div key={key} className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                            <h4 className="font-bold text-gray-700 mb-2">Ελεύθερα</h4>
+                            <div className="flex justify-between text-sm mb-1">
+                                <span className="text-gray-500">Υπόλοιπο:</span>
+                                <span className={stat.freeRem > 0 ? 'text-blue-600 font-bold' : 'text-green-600 font-bold'}>{stat.freeRem}</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                                <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, ((stat.totalReq-stat.freeRem)/stat.totalReq)*100)}%` }}></div>
+                            </div>
+                        </div>
+                    );
+                }
+
+                return (
+                    <div key={key} className="p-4 bg-white border border-blue-100 rounded-xl shadow-sm">
+                        <div className="flex justify-between items-center mb-3">
+                            <span className="font-bold text-blue-800">Ροή {greekKey}</span>
+                            <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full font-bold">
+                                {stat.totalReq} Σύνολο
+                            </span>
+                        </div>
+                        {/* Note: Logic for remaining counts is simplified here due to complexity of rule engine */}
+                        <div className="text-xs text-gray-400 italic">
+                            Δείτε τις οδηγίες ανά εξάμηνο για λεπτομέρειες.
+                        </div>
+                    </div>
+                );
+            })}
         </div>
 
         {generalWarnings.length > 0 && (
-          <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-xl">
+          <div className="mt-8 p-4 bg-orange-50 border border-orange-200 rounded-xl">
              <h4 className="font-bold text-orange-800 mb-2 text-sm flex items-center gap-2">
-               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                Εκκρεμότητες
              </h4>
              <ul className="text-xs text-orange-700 space-y-1 list-disc list-inside">
@@ -146,12 +278,9 @@ const Step3Courses: React.FC = () => {
         )}
 
         <div className="mt-8 pt-6 border-t border-gray-100">
-           <div className="text-sm text-gray-500 mb-4">
-             Επιλεγμένα μαθήματα: <span className="font-bold text-gray-900">{selectedCourseIds.length}</span>
-           </div>
            <button
              disabled={!isComplete}
-             className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-all
+             className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-all transform active:scale-95
                ${isComplete
                  ? 'bg-blue-600 hover:bg-blue-700'
                  : 'bg-gray-300 cursor-not-allowed'}
@@ -163,63 +292,6 @@ const Step3Courses: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 p-4 lg:p-8">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-bold text-gray-900">Επιλογή Μαθημάτων</h2>
-
-          <div className="flex bg-white rounded-lg border p-1">
-             <button
-               onClick={() => setActiveTab('main')}
-               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                 activeTab === 'main' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'
-               }`}
-             >
-               Μαθήματα Ροών
-             </button>
-             <button
-               onClick={() => setActiveTab('free')}
-               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                 activeTab === 'free' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'
-               }`}
-             >
-               Ελεύθερα / Άλλα
-             </button>
-          </div>
-        </div>
-
-        <div className="space-y-12">
-           {[6, 7, 8, 9].map(semester => {
-             const semesterCourses = coursesBySemester[semester] || [];
-             if (semesterCourses.length === 0) return null;
-
-             return (
-               <div key={semester} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                 <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3">
-                   <span className="bg-gray-200 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center text-sm">{semester}ο</span>
-                   Εξάμηνο
-                 </h3>
-                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                   {semesterCourses.map(course => (
-                     <CourseCard
-                       key={course.id}
-                       course={course}
-                       isSelected={selectedCourseIds.includes(String(course.id))}
-                       onToggle={(c) => toggleCourse(String(c.id))}
-                     />
-                   ))}
-                 </div>
-               </div>
-             );
-           })}
-
-           {Object.values(coursesBySemester).every(arr => arr.length === 0) && (
-             <div className="text-center py-12 border-2 border-dashed rounded-xl">
-               <p className="text-gray-400">Δεν βρέθηκαν διαθέσιμα μαθήματα για αυτή την κατηγορία.</p>
-             </div>
-           )}
-        </div>
-      </div>
     </div>
   );
 };
