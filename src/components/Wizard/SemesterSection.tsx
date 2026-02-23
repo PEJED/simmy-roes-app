@@ -39,7 +39,6 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
 }) => {
 
     // Updated Logic: >12 is the only strict warning for badge
-    const isOverLimit = data.totalSelected > 12;
     const isHardLimit = data.totalSelected >= 12;
 
     const isOpen = (sec: string) => !!expandedSections[`${semester}-${sec}`];
