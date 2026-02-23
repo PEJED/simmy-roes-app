@@ -113,6 +113,20 @@ export const courses: Course[] = [
         lab_hours: 1
     },
     {
+        id: 3362,
+        title: "ΕΡΓΑΣΤΗΡΙΟ ΕΝΣΩΜΑΤΩΜΕΝΩΝ ΣΥΣΤΗΜΑΤΩΝ",
+        semester: 9,
+        flow: "Υπολογιστές",
+        flow_code: "Y",
+        ects: 6,
+        type: 'elective',
+        is_flow_compulsory: false,
+        description: "Εργαστηριακό μάθημα που εστιάζει στον σχεδιασμό και την υλοποίηση ενσωματωμένων συστημάτων. Περιλαμβάνει ασκήσεις σε μικροελεγκτές, FPGAs, και συστήματα πραγματικού χρόνου.",
+        professors: "Σ. Ξύδης, Δ. Σούντρης, Σ. Κοκόσης (Ε.ΔΙ.Π.)",
+        lecture_hours: 0,
+        lab_hours: 3
+    },
+    {
         id: 3248,
         title: "ΣΥΣΤΗΜΑΤΑ ΑΝΑΜΟΝΗΣ",
         semester: 6,
