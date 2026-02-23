@@ -25,6 +25,12 @@ export const validateSelection = (
 ): string[] => {
     const warnings: string[] = [];
     const selectedIds = new Set(selectedCourses.map(c => String(c.id)));
+    const totalSelectedCount = selectedCourses.length;
+
+    // --- 0. Total Courses Check ---
+    if (totalSelectedCount !== 23) {
+         warnings.push(`Απαιτούνται ακριβώς 23 μαθήματα για τη λήψη διπλώματος (Έχετε επιλέξει: ${totalSelectedCount}).`);
+    }
 
     // --- 1. Identify Active Flows ---
     const activeFlows = Object.entries(flowSelections)
@@ -89,9 +95,14 @@ export const validateSelection = (
             warnings.push(`Ροή ${flowCode} (${isFull ? 'Ολόκληρη' : 'Μισή'}): Απαιτούνται τουλάχιστον ${reqCompulsory} υποχρεωτικά μαθήματα (Επιλέξατε: ${compulsoryCount}).`);
         }
 
-        // Check Total Count
-        if (totalCount < reqTotal) {
-            warnings.push(`Ροή ${flowCode} (${isFull ? 'Ολόκληρη' : 'Μισή'}): Απαιτούνται τουλάχιστον ${reqTotal} μαθήματα συνολικά (Επιλέξατε: ${totalCount}).`);
+        // Check Total Count (Strict Equality)
+        if (totalCount !== reqTotal) {
+             const typeStr = isFull ? 'Ολόκληρη' : 'Μισή';
+             if (totalCount < reqTotal) {
+                 warnings.push(`Ροή ${flowCode} (${typeStr}): Απαιτούνται ακριβώς ${reqTotal} μαθήματα (Επιλέξατε: ${totalCount}).`);
+             } else {
+                 warnings.push(`Ροή ${flowCode} (${typeStr}): Έχετε επιλέξει ${totalCount} μαθήματα. Το όριο είναι ${reqTotal}. Τα επιπλέον δεν προσμετρώνται ως ελεύθερα.`);
+             }
         }
 
         // Check Options from FLOW_RULES (e.g. "One of A or B")

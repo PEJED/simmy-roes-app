@@ -81,7 +81,7 @@ export const FLOW_DETAILS: Record<string, string> = {
 // Helper: Check if flow is 'full'
 const isFull = (flows: Record<string, FlowSelection>, code: string) => flows[code] === 'full';
 // Helper: Check if flow is 'half'
-const isHalf = (flows: Record<string, FlowSelection>, code: string) => flows[code] === 'half'; // Strict half check not needed here as logic uses combined checks
+const isHalf = (flows: Record<string, FlowSelection>, code: string) => flows[code] === 'half';
 
 // Helper: Check specific condition for "Other" flows (excluding main ones)
 // Returns true if the remaining flows match one of the 3 strict sub-options for "{at least 1/2 other}"
@@ -126,27 +126,31 @@ export function validateDirectionSelection(
     return { isValid: false, error: 'Παρακαλώ επιλέξτε Κατεύθυνση.' };
   }
 
+  // Global Check: Special Flows O and I can only be Full
+  if (flows['O'] === 'half' || flows['I'] === 'half') {
+      return { isValid: false, error: 'Οι ειδικές ροές Ο και Ι μπορούν να επιλεγούν μόνο ως Ολόκληρες.' };
+  }
+
   switch (direction) {
     case 'Electronics':
       // a) Full H + {Full Y OR Full S} + {at least 1/2 other}
       if (isFull(flows, 'H')) {
-        if (isFull(flows, 'Y') && !isFull(flows, 'S')) { // H + Y + Others
+        // We remove !isFull checks to allow supersets (e.g. H+Y+S all full) to be valid
+        if (isFull(flows, 'Y')) {
            if (checkAtLeastHalfOther(flows, ['H', 'Y'])) return { isValid: true, error: null };
         }
-        if (isFull(flows, 'S') && !isFull(flows, 'Y')) { // H + S + Others
+        if (isFull(flows, 'S')) {
            if (checkAtLeastHalfOther(flows, ['H', 'S'])) return { isValid: true, error: null };
         }
       }
 
       // b) Full H + Half S + {Full Y OR Full T OR Full Z}
-      if (isFull(flows, 'H') && isHalf(flows, 'S') && !isFull(flows, 'S')) { // Ensure strictly half if needed, or loosely
-         // Logic for (b) says "Half S". If S is Full, does it count?
-         // Typically (b) is distinct from (a). (a) covers Full S. So (b) implies S is NOT Full.
+      if (isFull(flows, 'H') && isHalf(flows, 'S')) {
          if (checkFullOther(flows, ['H', 'S'], ['Y', 'T', 'Z'])) return { isValid: true, error: null };
       }
 
       // c) Half H + Full S + {Full L OR Full D OR Full E}
-      if (isHalf(flows, 'H') && !isFull(flows, 'H') && isFull(flows, 'S')) {
+      if (isHalf(flows, 'H') && isFull(flows, 'S')) {
          if (checkFullOther(flows, ['H', 'S'], ['L', 'D', 'E'])) return { isValid: true, error: null };
       }
 
@@ -159,12 +163,12 @@ export function validateDirectionSelection(
       }
 
       // b) Full Y + Half L + {Full D OR Full S}
-      if (isFull(flows, 'Y') && isHalf(flows, 'L') && !isFull(flows, 'L')) {
+      if (isFull(flows, 'Y') && isHalf(flows, 'L')) {
          if (checkFullOther(flows, ['Y', 'L'], ['D', 'S'])) return { isValid: true, error: null };
       }
 
       // c) Half Y + Full L + {Full D OR Full S}
-      if (isHalf(flows, 'Y') && !isFull(flows, 'Y') && isFull(flows, 'L')) {
+      if (isHalf(flows, 'Y') && isFull(flows, 'L')) {
          if (checkFullOther(flows, ['Y', 'L'], ['D', 'S'])) return { isValid: true, error: null };
       }
 
@@ -177,12 +181,12 @@ export function validateDirectionSelection(
       }
 
       // b) Full T + Half D + {Full H OR Full S}
-      if (isFull(flows, 'T') && isHalf(flows, 'D') && !isFull(flows, 'D')) {
+      if (isFull(flows, 'T') && isHalf(flows, 'D')) {
          if (checkFullOther(flows, ['T', 'D'], ['H', 'S'])) return { isValid: true, error: null };
       }
 
       // c) Half T + Full D + {Full Y OR Full L OR Full S}
-      if (isHalf(flows, 'T') && !isFull(flows, 'T') && isFull(flows, 'D')) {
+      if (isHalf(flows, 'T') && isFull(flows, 'D')) {
          if (checkFullOther(flows, ['T', 'D'], ['Y', 'L', 'S'])) return { isValid: true, error: null };
       }
 
@@ -195,12 +199,12 @@ export function validateDirectionSelection(
       }
 
       // b) Full E + Half Z + {Full T OR Full D OR Full S}
-      if (isFull(flows, 'E') && isHalf(flows, 'Z') && !isFull(flows, 'Z')) {
+      if (isFull(flows, 'E') && isHalf(flows, 'Z')) {
          if (checkFullOther(flows, ['E', 'Z'], ['T', 'D', 'S'])) return { isValid: true, error: null };
       }
 
       // c) Half E + Full Z + {Full Y OR Full H OR Full S}
-      if (isHalf(flows, 'E') && !isFull(flows, 'E') && isFull(flows, 'Z')) {
+      if (isHalf(flows, 'E') && isFull(flows, 'Z')) {
          if (checkFullOther(flows, ['E', 'Z'], ['Y', 'H', 'S'])) return { isValid: true, error: null };
       }
 
