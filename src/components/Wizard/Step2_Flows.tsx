@@ -36,12 +36,11 @@ const Step2Flows: React.FC = () => {
 
   const currentComb = combinations.find(c => c.id === selectedCombinationId);
 
-  // Get available flows for the "Other" selection
   const getAvailableFlows = (comb: Combination) => {
     const exclude = [...Object.keys(comb.required), ...(comb.option.excludeCodes || [])];
     return Object.keys(FLOW_NAMES).filter(code =>
       !exclude.includes(code) &&
-      !['K', 'X', 'G', 'M', 'F'].includes(code) // Remove M and F from flow selection
+      !['K', 'X', 'G', 'M', 'F'].includes(code)
     );
   };
 
@@ -53,7 +52,7 @@ const Step2Flows: React.FC = () => {
     if (currentComb?.option.type === 'select_one_full') {
         const requiredCodes = Object.keys(currentComb?.required || {});
         Object.keys(flowSelections).forEach(c => {
-           if (!requiredCodes.includes(c) && c !== code) { // Clear others
+           if (!requiredCodes.includes(c) && c !== code) {
                setFlowSelection(c, 'none');
            }
         });
@@ -93,6 +92,12 @@ const Step2Flows: React.FC = () => {
   };
 
   const canContinue = currentComb && isOtherSatisfied();
+
+  const getGreekName = (code: string) => {
+      // FLOW_NAMES returns "Ροή X". We might want just "Ροή X" or customized.
+      // Already correct format.
+      return FLOW_NAMES[code] || code;
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
@@ -152,7 +157,7 @@ const Step2Flows: React.FC = () => {
                  <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
 
                  <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold tracking-wider text-gray-500 bg-gray-200 uppercase mb-2 self-start z-10">Υποχρεωτικη</span>
-                 <div className="text-base font-bold text-gray-900 leading-tight mb-4 z-10">{FLOW_NAMES[code]}</div>
+                 <div className="text-base font-bold text-gray-900 leading-tight mb-4 z-10">{getGreekName(code)}</div>
 
                  <div className="mt-auto flex items-center text-xs font-bold text-blue-700 bg-blue-100 px-3 py-1.5 rounded-lg self-start z-10">
                    {sel === 'full' ? 'Ολόκληρη' : 'Μισή'}
@@ -161,7 +166,7 @@ const Step2Flows: React.FC = () => {
              ))}
 
              {/* "Other" Flow Selector */}
-             <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 flex flex-col h-full relative overflow-hidden">
+             <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 flex flex-col h-full relative overflow-hidden shadow-sm">
                <div className="relative z-10 flex flex-col h-full">
                  <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold tracking-wider text-blue-700 bg-blue-100 uppercase mb-2 self-start border border-blue-200">
                    Επιπλεον Επιλογη
@@ -179,10 +184,10 @@ const Step2Flows: React.FC = () => {
 
                             return (
                                <div key={code} className={`p-2 rounded-lg border transition-all ${
-                                   selection !== 'none' ? 'bg-white border-blue-500 shadow-md' : 'bg-white/50 border-blue-100 hover:border-blue-300'
+                                   selection !== 'none' ? 'bg-white border-blue-500 shadow-md ring-1 ring-blue-200' : 'bg-white/60 border-blue-200 hover:border-blue-400 hover:bg-white'
                                }`}>
                                    <div className="font-bold text-xs text-gray-800 mb-1.5 text-center truncate" title={FLOW_NAMES[code]}>
-                                     {code} - {FLOW_NAMES[code].replace('Ροή ', '')}
+                                     {getGreekName(code)}
                                    </div>
                                    <div className="flex gap-1 justify-center">
                                        {!isFullOnly && (
@@ -232,7 +237,7 @@ const Step2Flows: React.FC = () => {
                      >
                        <option value="" disabled>-- Επιλογή --</option>
                        {getAllowedFlows(currentComb).map(code => (
-                         <option key={code} value={`${code}:full`}>{FLOW_NAMES[code]} (Ολόκληρη)</option>
+                         <option key={code} value={`${code}:full`}>{getGreekName(code)} (Ολόκληρη)</option>
                        ))}
                      </select>
                    </div>
