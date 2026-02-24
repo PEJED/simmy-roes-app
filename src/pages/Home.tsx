@@ -18,61 +18,52 @@ const WizardOrchestrator: React.FC = () => {
   };
 
   const getStepClass = (stepNum: number) => {
-    let baseClass = "px-3 py-1 rounded transition-colors text-sm font-medium ";
+    let baseClass = "px-3 py-1 rounded-lg transition-colors text-sm font-medium ";
     if (step === stepNum) {
-      return baseClass + "bg-blue-100 text-blue-800 font-bold";
+      return baseClass + "bg-blue-100 text-blue-900 font-bold border border-blue-200";
     }
 
-    // Check if step is accessible/active
     const isAccessible =
       stepNum === 1 ||
       (stepNum === 2 && direction) ||
       (stepNum === 3 && selectedCombinationId);
 
     if (isAccessible) {
-      return baseClass + "text-gray-600 hover:text-blue-600 hover:bg-gray-100 cursor-pointer";
+      return baseClass + "text-gray-600 hover:text-blue-700 hover:bg-gray-100 cursor-pointer";
     } else {
       return baseClass + "text-gray-300 cursor-not-allowed";
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b mb-8 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-          <h1 className="text-xl md:text-2xl font-bold text-blue-900 tracking-tight">
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Header - Sticky with High Z-Index */}
+      <div className="sticky top-0 z-50 bg-white/95 border-b border-gray-200 shadow-sm backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <h1 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+            <span className="bg-blue-600 text-white p-1.5 rounded-lg">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+            </span>
             Επιλογή Ροών ΣΗΜΜΥ - Οδηγός 2024-25
           </h1>
-          <nav className="flex items-center gap-2">
-             <button
-               onClick={() => handleStepClick(1)}
-               className={getStepClass(1)}
-             >
+
+          <nav className="flex items-center gap-1 sm:gap-2 bg-gray-50 p-1 rounded-xl border border-gray-100">
+             <button onClick={() => handleStepClick(1)} className={getStepClass(1)}>
                1. Κατεύθυνση
              </button>
-             <span className="text-gray-300">&rsaquo;</span>
-             <button
-               onClick={() => handleStepClick(2)}
-               disabled={!direction}
-               className={getStepClass(2)}
-             >
+             <span className="text-gray-300 font-light text-xl">›</span>
+             <button onClick={() => handleStepClick(2)} disabled={!direction} className={getStepClass(2)}>
                2. Ροές
              </button>
-             <span className="text-gray-300">&rsaquo;</span>
-             <button
-               onClick={() => handleStepClick(3)}
-               disabled={!selectedCombinationId}
-               className={getStepClass(3)}
-             >
+             <span className="text-gray-300 font-light text-xl">›</span>
+             <button onClick={() => handleStepClick(3)} disabled={!selectedCombinationId} className={getStepClass(3)}>
                3. Μαθήματα
              </button>
           </nav>
         </div>
-      </header>
+      </div>
 
-      {/* Steps */}
-      <main className="w-full max-w-7xl mx-auto px-4">
+      <main className="w-full max-w-7xl mx-auto px-4 pt-8">
         {step === 1 && <Step1Direction />}
         {step === 2 && <Step2Flows />}
         {step === 3 && <Step3Courses />}

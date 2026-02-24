@@ -39,7 +39,9 @@ export const FLOW_NAMES: Record<string, string> = {
   'O': 'Ροή Ο',
   'I': 'Ροή Ι',
   'M': 'Ροή Μ',
-  'F': 'Ροή Φ'
+  'F': 'Ροή Φ',
+  'G': 'Μη εντασσόμενα σε ροές',
+  'K': 'Ανθρωπιστικά'
 };
 
 export const FLOW_DESCRIPTIONS: Record<string, string> = {
@@ -54,7 +56,9 @@ export const FLOW_DESCRIPTIONS: Record<string, string> = {
   'O': 'Οικονομία και Διοίκηση',
   'I': 'Βιοϊατρική Τεχνολογία',
   'M': 'Εφαρμοσμένα Μαθηματικά',
-  'F': 'Εφαρμοσμένη Φυσική'
+  'F': 'Εφαρμοσμένη Φυσική',
+  'G': 'Μαθήματα Γενικής Παιδείας',
+  'K': 'Ανθρωπιστικές Σπουδές'
 };
 
 export const FLOW_DETAILS: Record<string, string> = {
@@ -69,7 +73,9 @@ export const FLOW_DETAILS: Record<string, string> = {
   'O': 'Μακροοικονομία, μικροοικονομία, διοίκηση επιχειρήσεων, επιχειρησιακή έρευνα και διαχείριση έργων.',
   'I': 'Ιατρική απεικόνιση, βιοϊατρική οργανολογία, βιοπληροφορική και επεξεργασία βιοσημάτων.',
   'M': 'Προχωρημένα μαθηματικά εργαλεία, αριθμητική ανάλυση και στατιστική.',
-  'F': 'Κβαντομηχανική, φυσική ημιαγωγών, οπτικοηλεκτρονική και υλικά.'
+  'F': 'Κβαντομηχανική, φυσική ημιαγωγών, οπτικοηλεκτρονική και υλικά.',
+  'G': 'Μαθήματα γενικής παιδείας και τεχνικής νομοθεσίας που δεν εντάσσονται σε συγκεκριμένη ροή.',
+  'K': 'Μαθήματα ανθρωπιστικών και κοινωνικών επιστημών.'
 };
 
 // Helper: Check if flow is 'full'
@@ -78,22 +84,23 @@ const isFull = (flows: Record<string, FlowSelection>, code: string) => flows[cod
 const isHalf = (flows: Record<string, FlowSelection>, code: string) => flows[code] === 'half';
 
 // Helper: Check specific condition for "Other" flows (excluding main ones)
-// Returns true if the remaining flows match one of the 3 sub-options for "{at least 1/2 other}"
+// Returns true if the remaining flows match one of the 3 strict sub-options for "{at least 1/2 other}"
 const checkAtLeastHalfOther = (flows: Record<string, FlowSelection>, excludeCodes: string[]) => {
   const otherFlows = Object.entries(flows).filter(([code, selection]) => {
+    // I and O are included here because they can satisfy the "1 Full Flow" requirement for option (a)
     return !excludeCodes.includes(code) && selection !== 'none';
   });
 
   const fullCount = otherFlows.filter(([, s]) => s === 'full').length;
   const halfCount = otherFlows.filter(([, s]) => s === 'half').length;
 
-  // Option 1: 1 Full (+ 2 Free - handled in Step 2)
+  // Way 1: 1 Full extra flow
   if (fullCount === 1 && halfCount === 0) return true;
 
-  // Option 2: 1 Half (+ 5 Free - handled in Step 2)
+  // Way 2: 1 Half extra flow
   if (fullCount === 0 && halfCount === 1) return true;
 
-  // Option 3: 2 Half (+ 1 Free - handled in Step 2)
+  // Way 3: 2 Half extra flows
   if (fullCount === 0 && halfCount === 2) return true;
 
   return false;
@@ -119,14 +126,20 @@ export function validateDirectionSelection(
     return { isValid: false, error: 'Παρακαλώ επιλέξτε Κατεύθυνση.' };
   }
 
+  // Global Check: Special Flows O and I can only be Full
+  if (flows['O'] === 'half' || flows['I'] === 'half') {
+      return { isValid: false, error: 'Οι ειδικές ροές Ο και Ι μπορούν να επιλεγούν μόνο ως Ολόκληρες.' };
+  }
+
   switch (direction) {
     case 'Electronics':
       // a) Full H + {Full Y OR Full S} + {at least 1/2 other}
       if (isFull(flows, 'H')) {
-        if (isFull(flows, 'Y') && !isFull(flows, 'S')) { // H + Y + Others
+        // We remove !isFull checks to allow supersets (e.g. H+Y+S all full) to be valid
+        if (isFull(flows, 'Y')) {
            if (checkAtLeastHalfOther(flows, ['H', 'Y'])) return { isValid: true, error: null };
         }
-        if (isFull(flows, 'S') && !isFull(flows, 'Y')) { // H + S + Others
+        if (isFull(flows, 'S')) {
            if (checkAtLeastHalfOther(flows, ['H', 'S'])) return { isValid: true, error: null };
         }
       }
