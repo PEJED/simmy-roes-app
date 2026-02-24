@@ -273,7 +273,7 @@ const Step3Courses: React.FC = () => {
                                     )}
                                 </span>
                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${stat.isComplete ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                                    {stat.requiredTotal === 7 ? 'Ολοκληρη' : 'Μιση'}
+                                    {stat.requiredTotal === 7 ? 'Ολόκληρη' : 'Μιση'}
                                 </span>
                             </div>
                             <div className="flex gap-2">
