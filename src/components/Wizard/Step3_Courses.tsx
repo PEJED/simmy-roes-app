@@ -102,7 +102,7 @@ const Step3Courses: React.FC = () => {
           colors[r.ruleId] = COLORS[idx % COLORS.length];
       });
       return colors;
-  }, [ruleStatuses.length]);
+  }, [ruleStatuses]);
 
   // Use the new centralized stats calculation
   const detailedStats = useMemo(() => {
