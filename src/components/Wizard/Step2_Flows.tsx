@@ -26,7 +26,6 @@ const Step2Flows: React.FC = () => {
     setSelectedCombinationId(combId);
     resetFlowSelections();
 
-    // Pre-fill required flows
     const comb = combinations.find(c => c.id === combId);
     if (comb) {
       Object.entries(comb.required).forEach(([code, sel]) => {
@@ -37,40 +36,37 @@ const Step2Flows: React.FC = () => {
 
   const currentComb = combinations.find(c => c.id === selectedCombinationId);
 
-  // Get available flows for the "Other" selection
   const getAvailableFlows = (comb: Combination) => {
     const exclude = [...Object.keys(comb.required), ...(comb.option.excludeCodes || [])];
     return Object.keys(FLOW_NAMES).filter(code =>
       !exclude.includes(code) &&
-      !['K', 'X'].includes(code) // Exclude Core, None
+      !['K', 'X', 'G', 'M', 'F'].includes(code)
     );
   };
 
-  // Get available "allowed" flows for the restricted option
   const getAllowedFlows = (comb: Combination) => {
      return comb.option.allowedCodes || [];
   };
 
   const handleOtherFlowChange = (code: string, selection: FlowSelection) => {
-    // Clear any previous "Other" selection that is NOT in the required set
-    const requiredCodes = Object.keys(currentComb?.required || {});
-
-    Object.keys(flowSelections).forEach(c => {
-       if (!requiredCodes.includes(c) && c !== code && !['I', 'O'].includes(c)) {
-           setFlowSelection(c, 'none');
-       }
-    });
-
+    if (currentComb?.option.type === 'select_one_full') {
+        // If selecting full, deselect others first
+        if (selection === 'full') {
+            const requiredCodes = Object.keys(currentComb?.required || {});
+            Object.keys(flowSelections).forEach(c => {
+               if (!requiredCodes.includes(c) && c !== code) {
+                   setFlowSelection(c, 'none');
+               }
+            });
+            setFlowSelection(code, 'full');
+        } else {
+            setFlowSelection(code, 'none');
+        }
+        return;
+    }
     setFlowSelection(code, selection);
   };
 
-  const handleExtraFlowToggle = (code: string) => {
-    // Toggle I or O between 'none' and 'full'
-    const current = flowSelections[code];
-    setFlowSelection(code, current === 'full' ? 'none' : 'full');
-  };
-
-  // Check if we have satisfied the "Other" requirement
   const isOtherSatisfied = () => {
     if (!currentComb) return false;
 
@@ -80,166 +76,205 @@ const Step2Flows: React.FC = () => {
     );
 
     if (currentComb.option.type === 'select_one_full') {
-       // Must have exactly one full from allowed list
+       // Must have exactly one other flow selected as FULL
        const match = otherFlows.find(([code, sel]) =>
          currentComb.option.allowedCodes?.includes(code) && sel === 'full'
        );
-       return !!match;
+       return !!match && otherFlows.length === 1;
     }
 
     if (currentComb.option.type === 'any_ge_half') {
-       // Must have at least one half or full
-       return otherFlows.length > 0;
+       const fullCount = otherFlows.filter(([, s]) => s === 'full').length;
+       const halfCount = otherFlows.filter(([, s]) => s === 'half').length;
+
+       if (fullCount === 1 && halfCount === 0) return true;
+       if (fullCount === 0 && halfCount === 1) return true;
+       if (fullCount === 0 && halfCount === 2) return true;
+
+       return false;
     }
 
     return false;
   };
 
+  // Helper to determine if an option should be disabled
+  const isOptionDisabled = (code: string, type: 'full' | 'half') => {
+      // 1. Logic for "Any GE Half" (Select at least 1/2)
+      if (currentComb && currentComb.option.type === 'any_ge_half') {
+          const requiredCodes = Object.keys(currentComb.required);
+          const otherFlows = Object.entries(flowSelections).filter(([c, s]) =>
+            !requiredCodes.includes(c) && s !== 'none'
+          );
+
+          const others = otherFlows.filter(([c]) => c !== code);
+
+          const fullCount = others.filter(([, s]) => s === 'full').length;
+          const halfCount = others.filter(([, s]) => s === 'half').length;
+
+          if (type === 'full') {
+              // Can select Full if 0 Fulls AND 0 Halves exist elsewhere
+              return fullCount > 0 || halfCount > 0;
+          }
+          if (type === 'half') {
+              // Can select Half if 0 Fulls exist AND < 2 Halves exist elsewhere
+              return fullCount > 0 || halfCount >= 2;
+          }
+      }
+
+      // 2. Logic for "Select One Full" (from allowed list)
+      if (currentComb && currentComb.option.type === 'select_one_full') {
+           // Only allow selecting FULL
+           if (type === 'half') return true;
+
+           // If another is already selected, disabling isn't strictly necessary as logic handles switch
+           // but we can disable strictly if desired. Here we allow switch.
+           return false;
+      }
+
+      return false;
+  };
+
   const canContinue = currentComb && isOtherSatisfied();
 
+  const getGreekName = (code: string) => {
+      return FLOW_NAMES[code] || code;
+  };
+
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
-      <div className="text-center mb-6 relative">
-        <h2 className="text-2xl font-bold text-gray-800 mb-1">Επιλογή Συνδυασμού Ροών</h2>
-        <p className="text-gray-600 text-sm mb-4">
-          Κατεύθυνση: <span className="font-semibold text-blue-700">{DIRECTION_INFO[direction].name}</span>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto px-4">
+      <div className="text-center mb-8 relative">
+        <h2 className="text-3xl font-extrabold text-gray-800 mb-2 tracking-tight">Επιλογή Συνδυασμού Ροών</h2>
+        <p className="text-gray-600 text-base mb-4 font-medium">
+          Κατεύθυνση: <span className="text-blue-700 underline decoration-blue-300 underline-offset-4">{DIRECTION_INFO[direction].name}</span>
         </p>
 
         <button
           onClick={() => setShowFlowInfo(true)}
-          className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5"
+          className="text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 hover:text-indigo-800 px-4 py-2 rounded-full transition-all inline-flex items-center gap-2 shadow-sm border border-indigo-100"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          Τι είναι αυτές οι ροές;
+          Πληροφορίες Ροών
         </button>
       </div>
 
-      {/* Combinations Grid - Compact */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {combinations.map(comb => {
            const isSelected = selectedCombinationId === comb.id;
            return (
              <div
                key={comb.id}
                onClick={() => handleCombinationSelect(comb.id)}
-               className={`relative p-3 rounded-lg border cursor-pointer transition-all duration-200 group flex items-center gap-3 ${
+               className={`relative p-5 rounded-2xl border-2 cursor-pointer transition-all duration-300 group flex items-center gap-4 ${
                  isSelected
-                 ? 'border-blue-600 bg-blue-50 shadow-sm ring-1 ring-blue-200'
-                 : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm'
+                 ? 'border-blue-600 bg-gradient-to-r from-blue-50 to-white shadow-lg scale-[1.02]'
+                 : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-md'
                }`}
              >
-                {/* Custom Radio Button - Smaller */}
-                <div className={`w-4 h-4 rounded-full border flex-shrink-0 items-center justify-center transition-colors ${
+                <div className={`w-6 h-6 rounded-full border-2 flex-shrink-0 items-center justify-center transition-colors flex ${
                   isSelected ? 'border-blue-600 bg-blue-600' : 'border-gray-300 group-hover:border-blue-400'
                 }`}>
-                  {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
                 </div>
 
-                <span className={`text-sm font-medium leading-tight ${isSelected ? 'text-blue-900' : 'text-gray-700'}`}>
+                <span className={`text-base font-bold leading-tight ${isSelected ? 'text-blue-900' : 'text-gray-700'}`}>
                   {comb.label}
                 </span>
-
-                {isSelected && (
-                  <svg className="w-4 h-4 text-blue-600 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                )}
              </div>
            );
         })}
       </div>
 
       {currentComb && (
-        <div className="bg-white p-5 rounded-xl shadow-md border border-gray-100 space-y-5 animate-in zoom-in-95 duration-300 mt-6">
-          <div className="flex items-center justify-between border-b pb-2">
-            <h3 className="text-lg font-bold text-gray-800">Διαμόρφωση</h3>
-            <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">2/3</span>
+        <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 space-y-8 animate-in zoom-in-95 duration-300 mt-10 ring-1 ring-black/5">
+          <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+            <h3 className="text-xl font-black text-gray-800 tracking-tight">Διαμόρφωση Ροών</h3>
+            <span className="text-[10px] font-bold px-3 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full shadow-sm">Βήμα 2/3</span>
           </div>
 
-          {/* Main Flow Grid - Compact */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_2fr] gap-6">
              {/* Required Flows */}
              {Object.entries(currentComb.required).map(([code, sel]) => (
-               <div key={code} className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex flex-col justify-between h-full">
-                 <div>
-                   <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider text-gray-500 bg-gray-200 uppercase mb-1">Υποχρεωτικη</span>
-                   <div className="text-sm font-bold text-gray-900 leading-tight">{FLOW_NAMES[code]}</div>
-                 </div>
-                 <div className="mt-2 flex items-center text-xs font-medium text-blue-700 bg-blue-100/50 px-2 py-1 rounded self-start">
+               <div key={code} className="p-5 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-200 flex flex-col h-full shadow-sm relative overflow-hidden group">
+                 <div className="absolute top-0 right-0 w-20 h-20 bg-blue-600/5 rounded-bl-[40px] -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+
+                 <span className="inline-block px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider text-gray-500 bg-gray-200/80 uppercase mb-3 self-start z-10 backdrop-blur-sm">Υποχρεωτικη</span>
+                 <div className="text-xl font-black text-gray-900 leading-tight mb-4 z-10">{getGreekName(code)}</div>
+
+                 <div className="mt-auto flex items-center text-xs font-bold text-blue-700 bg-blue-100/80 px-3 py-1.5 rounded-lg self-start z-10">
                    {sel === 'full' ? 'Ολόκληρη' : 'Μισή'}
                  </div>
                </div>
              ))}
 
              {/* "Other" Flow Selector */}
-             <div className="p-3 bg-blue-50/50 rounded-lg border-2 border-dashed border-blue-200 flex flex-col justify-between h-full relative overflow-hidden">
-               <div className="relative z-10">
-                 <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider text-blue-600 bg-blue-100 uppercase mb-1">
-                   3η Επιλογη
+             <div className="p-5 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-2xl border border-indigo-100 flex flex-col h-full relative overflow-hidden shadow-sm">
+               <div className="absolute inset-0 bg-white/40"></div>
+               <div className="relative z-10 flex flex-col h-full">
+                 <span className="inline-block px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider text-indigo-700 bg-indigo-100/80 uppercase mb-3 self-start backdrop-blur-sm border border-indigo-200">
+                   Επιπλεον Επιλογη
                  </span>
-                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                   Επιλέξτε ροή
-                 </label>
-                 <select
-                   className="w-full p-2 bg-white border border-blue-300 rounded text-xs text-gray-900 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none shadow-sm"
-                   onChange={(e) => {
-                      const [code, type] = e.target.value.split(':');
-                      if (code) handleOtherFlowChange(code, type as FlowSelection);
-                   }}
-                   defaultValue=""
-                 >
-                   <option value="" disabled>-- Επιλογή --</option>
-                   {currentComb.option.type === 'any_ge_half' ? (
-                     getAvailableFlows(currentComb).map(code => (
-                       <React.Fragment key={code}>
-                         {!['I', 'O'].includes(code) && (
-                           <option value={`${code}:half`}>{FLOW_NAMES[code]} (Μισή)</option>
-                         )}
-                         <option value={`${code}:full`}>{FLOW_NAMES[code]} (Ολόκληρη)</option>
-                       </React.Fragment>
-                     ))
-                   ) : (
-                     getAllowedFlows(currentComb).map(code => (
-                       <option key={code} value={`${code}:full`}>{FLOW_NAMES[code]} (Ολόκληρη)</option>
-                     ))
-                   )}
-                 </select>
+
+                 <div className="flex-1 flex flex-col">
+                    <div className="text-xs text-indigo-900 font-semibold mb-4 bg-white/60 p-2 rounded-lg border border-indigo-100/50">
+                       {currentComb.option.type === 'any_ge_half'
+                         ? <span>Επιλέξτε: <span className="text-indigo-700">1 Ολόκληρη</span> ή <span className="text-indigo-700">1 Μισή</span> ή <span className="text-indigo-700">2 Μισές</span></span>
+                         : <span>Επιλέξτε: <span className="text-indigo-700">1 Ολόκληρη</span> από τις διαθέσιμες</span>
+                       }
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 overflow-y-auto max-h-[300px] pr-1 custom-scrollbar">
+                       {(currentComb.option.type === 'select_one_full' ? getAllowedFlows(currentComb) : getAvailableFlows(currentComb)).map(code => {
+                          const selection = flowSelections[code] || 'none';
+                          const isFullOnly = ['I', 'O'].includes(code) || currentComb.option.type === 'select_one_full';
+
+                          const disabledFull = isOptionDisabled(code, 'full');
+                          const disabledHalf = isOptionDisabled(code, 'half');
+
+                          return (
+                             <div key={code} className={`p-3 rounded-xl border transition-all duration-200 ${
+                                 selection !== 'none'
+                                 ? 'bg-white border-indigo-500 shadow-md ring-2 ring-indigo-100 scale-[1.02]'
+                                 : 'bg-white/70 border-indigo-100 hover:border-indigo-300 hover:bg-white'
+                             }`}>
+                                 <div className="font-bold text-xs text-gray-800 mb-2 text-center truncate" title={FLOW_NAMES[code]}>
+                                   {getGreekName(code)}
+                                 </div>
+                                 <div className="flex gap-1.5 justify-center">
+                                     {!isFullOnly && (
+                                          <button
+                                              disabled={disabledHalf}
+                                              onClick={() => handleOtherFlowChange(code, selection === 'half' ? 'none' : 'half')}
+                                              className={`px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all border w-10 ${
+                                                  selection === 'half'
+                                                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                                                  : disabledHalf
+                                                      ? 'bg-gray-100 text-gray-300 border-gray-100 cursor-not-allowed'
+                                                      : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-400 hover:text-indigo-600'
+                                              }`}
+                                          >
+                                              ½
+                                          </button>
+                                     )}
+                                     <button
+                                         disabled={disabledFull}
+                                         onClick={() => handleOtherFlowChange(code, selection === 'full' ? 'none' : 'full')}
+                                         className={`flex-1 px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${
+                                            selection === 'full'
+                                            ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                                            : disabledFull
+                                                ? 'bg-gray-100 text-gray-300 border-gray-100 cursor-not-allowed'
+                                                : 'bg-white text-gray-600 border-gray-200 hover:border-purple-400 hover:text-purple-600'
+                                         }`}
+                                     >
+                                         Full
+                                     </button>
+                                 </div>
+                             </div>
+                          );
+                       })}
+                    </div>
+                 </div>
                </div>
-             </div>
-          </div>
-
-          {/* Extra I/O Options */}
-          <div className="pt-4 border-t border-gray-100">
-             <h4 className="text-xs font-bold text-gray-700 mb-2 flex items-center gap-1.5">
-               <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-               Extra
-             </h4>
-             <div className="flex flex-wrap gap-2">
-               {['I', 'O'].map(code => {
-                 if (currentComb.required[code]) return null;
-                 const isChecked = flowSelections[code] === 'full';
-
-                 return (
-                   <label key={code} className={`flex items-center space-x-2 px-3 py-2 rounded-md border cursor-pointer transition-all ${
-                     isChecked ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-200' : 'bg-white border-gray-200 hover:bg-gray-50'
-                   }`}>
-                     <div className={`w-4 h-4 rounded border flex items-center justify-center ${
-                        isChecked ? 'bg-indigo-600 border-indigo-600' : 'border-gray-400 bg-white'
-                     }`}>
-                        {isChecked && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                     </div>
-                     <input
-                       type="checkbox"
-                       checked={isChecked}
-                       onChange={() => handleExtraFlowToggle(code)}
-                       className="hidden"
-                     />
-                     <span className={`text-xs font-medium ${isChecked ? 'text-indigo-900' : 'text-gray-700'}`}>
-                       + {FLOW_NAMES[code]}
-                     </span>
-                   </label>
-                 );
-               })}
              </div>
           </div>
         </div>
@@ -247,28 +282,28 @@ const Step2Flows: React.FC = () => {
 
       {/* Flow Info Modal */}
       {showFlowInfo && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowFlowInfo(false)}>
-          <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6 sticky top-0 bg-white pb-4 border-b z-10">
+        <div className="fixed inset-0 bg-gray-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setShowFlowInfo(false)}>
+          <div className="bg-white rounded-3xl p-8 max-w-2xl w-full max-h-[85vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200 border border-gray-200" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-8 sticky top-0 bg-white pb-4 border-b border-gray-100 z-10">
               <div>
-                <h3 className="text-2xl font-bold text-gray-800">Επεξήγηση Ροών</h3>
-                <p className="text-sm text-gray-500 mt-1">Σύντομη περιγραφή του αντικειμένου κάθε ροής.</p>
+                <h3 className="text-2xl font-black text-gray-800 tracking-tight">Επεξήγηση Ροών</h3>
+                <p className="text-sm text-gray-500 mt-1 font-medium">Ανάλυση αντικειμένου για κάθε ροή σπουδών.</p>
               </div>
               <button
                 onClick={() => setShowFlowInfo(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-800"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 hover:text-gray-800"
               >
                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="grid gap-4">
               {Object.entries(FLOW_NAMES).map(([code, name]) => {
-                 if (['X', 'K'].includes(code)) return null; // Skip non-flow items
+                 if (['X', 'K'].includes(code)) return null;
                  return (
-                   <div key={code} className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
+                   <div key={code} className="p-5 bg-gray-50 rounded-2xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors group">
                       <div className="flex items-center gap-3 mb-2">
-                         <span className="px-2.5 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-md uppercase tracking-wide">{name}</span>
-                         <h4 className="font-bold text-gray-800 text-sm md:text-base">{FLOW_DESCRIPTIONS[code]}</h4>
+                         <span className="px-2.5 py-1 bg-white border border-gray-200 text-gray-700 text-[10px] font-bold rounded-lg uppercase tracking-wide group-hover:border-indigo-200 group-hover:text-indigo-700">{name}</span>
+                         <h4 className="font-bold text-gray-900 text-sm md:text-base">{FLOW_DESCRIPTIONS[code]}</h4>
                       </div>
                       <p className="text-sm text-gray-600 leading-relaxed ml-1">
                         {FLOW_DETAILS[code] || "Δεν υπάρχει διαθέσιμη περιγραφή."}
@@ -281,25 +316,25 @@ const Step2Flows: React.FC = () => {
         </div>
       )}
 
-      <div className="flex justify-between pt-4 border-t border-gray-200">
+      <div className="flex justify-between pt-8 border-t border-gray-200">
         <button
           onClick={() => {
              setStep(1);
              setSelectedCombinationId(null);
              resetFlowSelections();
           }}
-          className="px-4 py-2 rounded-lg font-medium text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-1.5"
+          className="px-6 py-3 rounded-2xl font-bold text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2"
         >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           Πίσω
         </button>
         <button
           disabled={!canContinue}
           onClick={() => setStep(3)}
-          className={`px-6 py-2 rounded-lg font-bold text-sm text-white shadow-sm transition-all flex items-center gap-1.5 ${
+          className={`px-10 py-3 rounded-2xl font-bold text-sm text-white shadow-xl transition-all flex items-center gap-2 transform active:scale-95 ${
             canContinue
-              ? 'bg-blue-600 hover:bg-blue-700 hover:shadow-md hover:-translate-y-0.5'
-              : 'bg-gray-300 cursor-not-allowed'
+              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:-translate-y-0.5 shadow-blue-200'
+              : 'bg-gray-300 cursor-not-allowed shadow-none'
           }`}
         >
           Συνέχεια

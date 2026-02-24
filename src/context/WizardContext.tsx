@@ -35,6 +35,20 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return validateDirectionSelection(direction, flowSelections);
   }, [direction, flowSelections]);
 
+  // Keep simple locking based on is_flow_compulsory for now?
+  // User asked for complex rules. We will handle visual categorization in UI.
+  // We can still auto-select "core" compulsory if we want, or leave it to user.
+  // The user requirement "Mandatory courses... Must be pre-selected, disabled" was from Step 1 of this task.
+  // The current request says "split into 3 categories... compulsory...".
+  // It implies we should still treat them as locked/pre-selected?
+  // Yes, probably. But "3 of 5" makes pre-selection ambiguous.
+  // "4 of 5" -> which 4?
+  // So locking is only possible for strict "100% required" courses.
+  // I will keep the *concept* of locking but update the logic later if needed.
+  // For now, I'll rely on the simple 'is_flow_compulsory' for the initial lock,
+  // or maybe I should disable locking until the new rules are in place?
+  // Let's keep it simple here and refine in Step3_Courses.
+
   const lockedCourseIds = useMemo(() => {
     const ids: string[] = [];
     Object.entries(flowSelections).forEach(([flowCode, selection]) => {
