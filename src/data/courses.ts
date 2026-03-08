@@ -86,7 +86,7 @@ export const courses: Course[] = [
         lab_hours: 1
     },
     {
-        id: 605,
+        id: 3222,
         title: "ΗΛΕΚΤΡΟΝΙΚΗ ΙΙ",
         semester: 6,
         flow: "Ηλεκτρονική",
@@ -96,7 +96,7 @@ export const courses: Course[] = [
         is_flow_compulsory: true,
         description: "Ενισχυτές πολλών βαθμίδων, απόκριση συχνότητας, τελεστικοί ενισχυτές, αναδράσεις.",
         lecture_hours: 4,
-        lab_hours: 2
+        lab_hours: 0
     },
     {
         id: 3288,
@@ -113,20 +113,6 @@ export const courses: Course[] = [
         lab_hours: 1
     },
     {
-        id: 3362,
-        title: "ΕΡΓΑΣΤΗΡΙΟ ΕΝΣΩΜΑΤΩΜΕΝΩΝ ΣΥΣΤΗΜΑΤΩΝ",
-        semester: 9,
-        flow: "Υπολογιστές",
-        flow_code: "Y",
-        ects: 6,
-        type: 'elective',
-        is_flow_compulsory: false,
-        description: "Εργαστηριακό μάθημα που εστιάζει στον σχεδιασμό και την υλοποίηση ενσωματωμένων συστημάτων. Περιλαμβάνει ασκήσεις σε μικροελεγκτές, FPGAs, και συστήματα πραγματικού χρόνου.",
-        professors: "Σ. Ξύδης, Δ. Σούντρης, Σ. Κοκόσης (Ε.ΔΙ.Π.)",
-        lecture_hours: 0,
-        lab_hours: 3
-    },
-    {
         id: 3248,
         title: "ΣΥΣΤΗΜΑΤΑ ΑΝΑΜΟΝΗΣ",
         semester: 6,
@@ -141,7 +127,7 @@ export const courses: Course[] = [
         lab_hours: 1
     },
     {
-        id: 4000,
+        id: 3299,
         title: "ΨΗΦΙΑΚΕΣ ΕΠΙΚΟΙΝΩΝΙΕΣ (ΣΥΝΤΟΜΗ ΘΕΩΡΙΑ ΚΑΙ ΕΡΓΑΣΤΗΡΙΟ)",
         semester: 6,
         flow: "Δίκτυα",
@@ -154,7 +140,7 @@ export const courses: Course[] = [
         lab_hours: 0
     },
     {
-        id: 705,
+        id: 3057,
         title: "ΜΙΚΡΟΚΥΜΑΤΑ",
         semester: 6,
         flow: "Τηλεπικοινωνίες",
@@ -164,7 +150,7 @@ export const courses: Course[] = [
         is_flow_compulsory: true,
         description: "Γραμμές μεταφοράς, διαγράμματα Smith, προσαρμογή, μικροκυματικά δίκτυα.",
         lecture_hours: 3,
-        lab_hours: 1
+        lab_hours: 2
     },
     {
         id: 4001,
@@ -193,7 +179,7 @@ export const courses: Course[] = [
         lab_hours: 0
     },
     {
-        id: 704,
+        id: 3149,
         title: "ΨΗΦΙΑΚΗ ΕΠΕΞΕΡΓΑΣΙΑ ΣΗΜΑΤΟΣ",
         semester: 6,
         flow: "Συστήματα",
@@ -206,7 +192,7 @@ export const courses: Course[] = [
         lab_hours: 1
     },
     {
-        id: 4003,
+        id: 3171,
         title: "ΣΧΕΔΙΑΣΗ ΣΥΣΤΗΜΑΤΩΝ ΑΥΤΟΜΑΤΟΥ ΕΛΕΓΧΟΥ",
         semester: 6,
         flow: "Συστήματα",
@@ -245,7 +231,7 @@ export const courses: Course[] = [
         lab_hours: 0
     },
     {
-        id: 609,
+        id: 3290,
         title: "ΗΛΕΚΤΡΙΚΕΣ ΜΗΧΑΝΕΣ Ι",
         semester: 6,
         flow: "Ενέργεια",
@@ -555,7 +541,7 @@ export const courses: Course[] = [
         lab_hours: 2
     },
     {
-        id: 4017,
+        id: 3362,
         title: "ΑΛΛΗΛΕΠΙΔΡΑΣΗ ΑΝΘΡΩΠΟΥ ΥΠΟΛΟΓΙΣΤΗ",
         semester: 7,
         flow: "Υπολογιστές",
@@ -596,7 +582,7 @@ export const courses: Course[] = [
         lab_hours: 2
     },
     {
-        id: 4018,
+        id: 3016,
         title: "ΗΛΕΚΤΡΟΝΙΚΗ ΙΙΙ",
         semester: 7,
         flow: "Ηλεκτρονική",
@@ -651,7 +637,7 @@ export const courses: Course[] = [
         lab_hours: 2
     },
     {
-        id: 4019,
+        id: 3300,
         title: "ΚΕΡΑΙΕΣ",
         semester: 7,
         flow: "Τηλεπικοινωνίες",
@@ -716,7 +702,7 @@ export const courses: Course[] = [
         lab_hours: 0
     },
     {
-        id: 4024,
+        id: 3305,
         title: "ΡΟΜΠΟΤΙΚΗ Ι: ΑΝΑΛΥΣΗ-ΕΛΕΓΧΟΣ-ΕΡΓΑΣΤΗΡΙΟ",
         semester: 7,
         flow: "Συστήματα",
@@ -729,7 +715,7 @@ export const courses: Course[] = [
         lab_hours: 0
     },
     {
-        id: 4025,
+        id: 3101,
         title: "ΠΑΡΑΓΩΓΗ ΥΨΗΛΩΝ ΤΑΣΕΩΝ",
         semester: 7,
         flow: "Ενέργεια",
@@ -768,7 +754,7 @@ export const courses: Course[] = [
         lab_hours: 0
     },
     {
-        id: 4028,
+        id: 3308,
         title: "ΑΝΑΛΥΣΗ ΣΗΕ (ΜΟΝΙΜΗ ΚΑΤΑΣΤΑΣΗ ΛΕΙΤΟΥΡΓΙΑΣ)",
         semester: 7,
         flow: "Ενέργεια",
@@ -955,7 +941,7 @@ export const courses: Course[] = [
         lab_hours: 0
     },
     {
-        id: 908,
+        id: 3403,
         title: "ΜΗΧΑΝΙΚΗ ΜΑΘΗΣΗ",
         semester: 7,
         flow: "Μη εντασσόμενα σε ροές",
@@ -1269,7 +1255,7 @@ export const courses: Course[] = [
         lab_hours: 0
     },
     {
-        id: 806,
+        id: 3333,
         title: "ΟΡΑΣΗ ΥΠΟΛΟΓΙΣΤΩΝ",
         semester: 8,
         flow: "Συστήματα",
