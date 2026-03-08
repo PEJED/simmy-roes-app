@@ -322,30 +322,40 @@ const Step2Flows: React.FC = () => {
         </div>
       )}
 
-      <div className="sticky bottom-4 z-40 mt-12 bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-gray-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex justify-between items-center transition-all duration-300">
+      <div className="sticky bottom-4 z-40 mt-12 bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-gray-200/50 shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex flex-col sm:flex-row justify-between items-center gap-4 transition-all duration-300">
         <button
           onClick={() => {
              setStep(1);
              setSelectedCombinationId(null);
              resetFlowSelections();
           }}
-          className="px-6 py-3 rounded-xl font-bold text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center gap-2"
+          className="w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           Πίσω
         </button>
-        <button
-          disabled={!canContinue}
-          onClick={() => setStep(3)}
-          className={`px-10 py-3 rounded-xl font-bold text-sm text-white shadow-xl transition-all flex items-center gap-2 transform active:scale-95 ${
-            canContinue
-              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:-translate-y-1 shadow-blue-200/50 ring-4 ring-blue-500/20'
-              : 'bg-gray-300 cursor-not-allowed shadow-none'
-          }`}
-        >
-          Συνέχεια
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-        </button>
+
+        <div className="flex flex-col items-center sm:items-end w-full sm:w-auto">
+          <button
+            disabled={!canContinue}
+            onClick={() => setStep(3)}
+            className={`w-full sm:w-auto px-12 py-4 rounded-2xl font-bold text-lg text-white shadow-xl transition-all flex items-center justify-center gap-3 transform active:scale-95 ${
+              canContinue
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:-translate-y-1 shadow-blue-200/50 ring-4 ring-blue-500/20'
+                : 'bg-gray-300 cursor-not-allowed shadow-none opacity-80'
+            }`}
+          >
+            Συνέχεια
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+          </button>
+
+          {!canContinue && selectedCombinationId && (
+            <span className="text-xs text-orange-600 font-medium mt-2 text-center flex items-center gap-1">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              Επιλέξτε τις απαιτούμενες ροές για να συνεχίσετε
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
