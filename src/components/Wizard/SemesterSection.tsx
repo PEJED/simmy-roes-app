@@ -65,7 +65,8 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                     const colorClass = ruleColors[activeRule.ruleId] || 'border-yellow-400';
                     const ringColor = colorClass.split(' ').find(cls => cls.startsWith('border-'))?.replace('border-', 'ring-') || 'ring-yellow-400';
                     // Pass ring and border color.
-                    extraClass = `ring-2 ring-offset-2 ${ringColor}`;
+                    const borderColor = colorClass.split(' ').find(cls => cls.startsWith('border-')) || 'border-yellow-400';
+                    extraClass = `ring-2 ring-offset-2 ${ringColor} ${borderColor}`;
                 } else if (isSelected && c.flow_code && satisfiedFlows.has(c.flow_code)) {
                     // Priority 2: Satisfied Flow (Green)
                     // Only apply if selected and flow is satisfied
