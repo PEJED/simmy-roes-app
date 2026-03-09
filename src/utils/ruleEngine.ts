@@ -99,7 +99,8 @@ export const calculateDetailedStats = (
         if (ruleObj) {
              const manualCompulsory = new Set([
                  ...(ruleObj.compulsory || []),
-                 ...(ruleObj.pool || [])
+                 ...(ruleObj.pool || []),
+                 ...(ruleObj.options ? ruleObj.options.flat() : [])
              ]);
              if (manualCompulsory.size > 0) {
                  isCompulsory = (c) => c.is_flow_compulsory || manualCompulsory.has(String(c.id));

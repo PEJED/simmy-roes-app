@@ -48,7 +48,8 @@ const Step3Courses: React.FC = () => {
         const inPool = rule?.pool?.includes(id);
         const inOptions = rule?.options?.some(opt => opt.includes(id));
 
-        if (inPool || inOptions) return 'flow_elective';
+        if (inOptions) return 'compulsory';
+        if (inPool) return 'flow_elective';
         return 'flow_elective';
     }
     return 'free';
