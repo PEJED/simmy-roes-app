@@ -182,11 +182,29 @@ export const calculateDetailedStats = (
     // "Must select at least 1 compulsory course of the 6th semester from 3 different BASIC flows."
     const flowsWithComp6th = new Set(
         selectedCourses
-            .filter(c =>
-                c.semester === 6 &&
-                c.is_flow_compulsory &&
-                BASIC_FLOWS.includes(c.flow_code)
-            )
+            .filter(c => {
+                if (c.semester !== 6 || !BASIC_FLOWS.includes(c.flow_code)) return false;
+
+                // Check dynamically if it's considered compulsory in any flow selection rule
+                let isCompulsoryDynamic = c.is_flow_compulsory;
+                const flowSel = flowSelections[c.flow_code];
+                if (flowSel && flowSel !== 'none') {
+                    let rule = FLOW_RULES[c.flow_code]?.[flowSel];
+                    const ruleObj = typeof rule === 'function' ? rule(direction) : rule;
+
+                    if (ruleObj) {
+                        const manualCompulsory = new Set([
+                            ...(ruleObj.compulsory || []),
+                            ...(ruleObj.pool || []),
+                            ...(ruleObj.options ? ruleObj.options.flat() : [])
+                        ]);
+                        if (manualCompulsory.has(String(c.id))) {
+                            isCompulsoryDynamic = true;
+                        }
+                    }
+                }
+                return isCompulsoryDynamic;
+            })
             .map(c => c.flow_code)
     );
 
