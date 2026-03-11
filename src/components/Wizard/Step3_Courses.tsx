@@ -416,311 +416,160 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
         <div className="lg:min-h-min relative flex flex-col h-full">
             {/* Mobile close button */}
             <button
-                onClick={() => setShowMobileSummary(false)}
-                className="lg:hidden absolute top-0 right-0 p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full z-50 transition-colors"
+              onClick={() => setShowMobileSummary(false)}
+              className="lg:hidden absolute -top-1 -right-1 p-1.5 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-full"
             >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
 
-            <button
-              onClick={() => setStep(2)}
-              className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-2 text-sm font-bold mb-6 transition-colors group w-fit"
-            >
-              <span className="bg-gray-100 dark:bg-gray-800 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 p-1.5 rounded-lg transition-colors">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-              </span>
-              Πίσω στη Δομή
-            </button>
+            <h2 className="text-lg font-black text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <span className="w-1.5 h-6 bg-blue-600 rounded-full"></span>
+              Σύνοψη
+            </h2>
 
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100 dark:border-gray-800">
-                <h3 className="text-xl font-black text-gray-900 dark:text-gray-100 flex items-center gap-2.5">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-500/20 rounded-xl">
-                        <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                        </svg>
+            <div className="flex-1 overflow-y-auto pr-1 -mr-1 custom-scrollbar space-y-3">
+              {/* Progress Card */}
+              <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-4 text-white shadow-lg relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                
+                <div className="relative flex items-center gap-4">
+                  <div className="relative w-14 h-14 shrink-0">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-white/20" />
+                      <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="4" fill="transparent" strokeDasharray={150.8} strokeDashoffset={150.8 * (1 - Math.min(selectedCourseIds.length, 25) / 25)} className="text-white transition-all duration-1000" strokeLinecap="round" />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black">
+                      {Math.round((Math.min(selectedCourseIds.length, 25) / 25) * 100)}%
                     </div>
-                    Σύνοψη
-                </h3>
-            </div>
-
-            {/* Premium Progress Card */}
-            <div className="mb-8 relative group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 rounded-3xl blur opacity-20 group-hover:opacity-30 transition duration-500"></div>
-                <div className="relative bg-white dark:bg-gray-800/90 backdrop-blur-xl border border-white/50 dark:border-gray-700/50 rounded-3xl p-6 shadow-xl overflow-hidden">
-                    {/* Background Decorative Element */}
-                    <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-indigo-500/5 dark:bg-indigo-400/10 rounded-full blur-3xl"></div>
-                    
-                    <div className="flex justify-between items-start mb-6">
-                        <div>
-                            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400 mb-1">ΠΡΟΟΔΟΣ ΠΤΥΧΙΟΥ</div>
-                            <div className="flex items-baseline gap-1.5">
-                                <span className={`text-5xl font-black tracking-tighter ${selectedCourseIds.length > 25 ? 'text-rose-500' : selectedCourseIds.length === 25 ? 'text-emerald-500' : 'text-gray-900 dark:text-gray-100'}`}>
-                                    {selectedCourseIds.length}
-                                </span>
-                                <span className="text-xl font-bold text-gray-400 dark:text-gray-500">/ 25</span>
-                            </div>
-                        </div>
-                        <div className="relative w-16 h-16 flex items-center justify-center">
-                            <svg className="w-full h-full transform -rotate-90">
-                                <circle
-                                    cx="32"
-                                    cy="32"
-                                    r="28"
-                                    stroke="currentColor"
-                                    strokeWidth="6"
-                                    fill="transparent"
-                                    className="text-gray-100 dark:text-gray-700"
-                                />
-                                <circle
-                                    cx="32"
-                                    cy="32"
-                                    r="28"
-                                    stroke="url(#progressGradient)"
-                                    strokeWidth="6"
-                                    fill="transparent"
-                                    strokeDasharray={175.9}
-                                    strokeDashoffset={175.9 - (Math.min(selectedCourseIds.length / 25, 1) * 175.9)}
-                                    strokeLinecap="round"
-                                    className="transition-all duration-1000 ease-out"
-                                />
-                                <defs>
-                                    <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stopColor="#3b82f6" />
-                                        <stop offset="100%" stopColor="#8b5cf6" />
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-                            <span className="absolute text-[10px] font-black text-indigo-600 dark:text-indigo-400">
-                                {Math.round((selectedCourseIds.length / 25) * 100)}%
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Progress Bar with Multiple Stages */}
-                    <div className="relative h-3 w-full bg-gray-100 dark:bg-gray-700/50 rounded-full overflow-hidden p-0.5">
-                        <div 
-                            className={`h-full rounded-full transition-all duration-700 ease-out ${
-                                selectedCourseIds.length > 25 
-                                ? 'bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.4)]' 
-                                : selectedCourseIds.length === 25 
-                                ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)]' 
-                                : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 shadow-[0_0_12px_rgba(99,102,241,0.3)]'
-                            }`}
-                            style={{ width: `${Math.min((selectedCourseIds.length / 25) * 100, 100)}%` }}
-                        />
-                    </div>
-
-                    {selectedCourseIds.length > 25 && (
-                        <div className="mt-4 flex items-center gap-2 px-3 py-2 bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-xl animate-in fade-in slide-in-from-top-1">
-                            <div className="p-1 bg-rose-500 rounded-full">
-                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                            </div>
-                            <span className="text-[11px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wide">Υπέρβαση ορίου μαθημάτων</span>
-                        </div>
-                    )}
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold text-blue-100 uppercase tracking-widest mb-0.5">Πρόοδος</div>
+                    <div className="text-xl font-black leading-none">{selectedCourseIds.length} / 25</div>
+                    <div className="text-[9px] text-blue-100/80 font-medium mt-1 uppercase">Μαθήματα για Πτυχίο</div>
+                  </div>
                 </div>
-            </div>
-
-            <div className="space-y-4 mb-8">
-                {Object.entries(detailedStats.flowStats).map(([key, stat]) => {
-                    const greekKey = FLOW_NAMES[key]?.replace(/Flow |Ροή /g, '') || key;
-                    const flowLabel = greekKey === 'Κορμός' ? 'Κορμός' : `Ροή ${greekKey}`;
-                    
-                    return (
-                        <div key={key} className={`group relative p-4 rounded-2xl border transition-all duration-300 ${
-                            stat.isComplete 
-                            ? 'bg-emerald-50/50 dark:bg-emerald-500/5 border-emerald-100 dark:border-emerald-500/20' 
-                            : 'bg-white dark:bg-gray-800/40 border-gray-100 dark:border-gray-800 hover:border-indigo-200 dark:hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/5'
-                        }`}>
-                            <div className="flex flex-col gap-3">
-                                <div className="flex justify-between items-center">
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                        <div className={`p-2 rounded-lg shrink-0 ${
-                                            stat.isComplete ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
-                                        }`}>
-                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={stat.isComplete ? "M5 13l4 4L19 7" : "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"} />
-                                            </svg>
-                                        </div>
-                                        <span className="font-bold text-gray-900 dark:text-gray-100 text-sm truncate uppercase tracking-wide">
-                                            {flowLabel}
-                                        </span>
-                                    </div>
-                                    {stat.isComplete && (
-                                        <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/20 px-2 py-1 rounded-md uppercase tracking-widest">
-                                            ΟΛΟΚΛΗΡΩΣΗ
-                                        </span>
-                                    )}
-                                </div>
-
-                                {!stat.isComplete && (
-                                    <div className="flex gap-2">
-                                        <div className="flex-1 flex flex-col gap-1">
-                                            <div className="flex items-center justify-between text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">
-                                                <span>Υποχρεωτικά</span>
-                                                <span className={stat.missingCompulsory === 0 ? 'text-emerald-500' : 'text-rose-500'}>
-                                                    {stat.requiredCompulsory - stat.missingCompulsory}/{stat.requiredCompulsory}
-                                                </span>
-                                            </div>
-                                            <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                                                <div 
-                                                    className="h-full bg-rose-500 transition-all duration-500"
-                                                    style={{ width: `${((stat.requiredCompulsory - stat.missingCompulsory) / stat.requiredCompulsory) * 100}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="flex-1 flex flex-col gap-1">
-                                            <div className="flex items-center justify-between text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider px-1">
-                                                <span>Επιλογής</span>
-                                                <span className={stat.missingTotal === 0 ? 'text-emerald-500' : 'text-fuchsia-500'}>
-                                                    {stat.requiredTotal - stat.missingTotal}/{stat.requiredTotal}
-                                                </span>
-                                            </div>
-                                            <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                                                <div 
-                                                    className="h-full bg-fuchsia-500 transition-all duration-500"
-                                                    style={{ width: `${((stat.requiredTotal - stat.missingTotal) / stat.requiredTotal) * 100}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                                
-                                {stat.isComplete && (
-                                    <div className="text-[11px] font-medium text-emerald-700/70 dark:text-emerald-400/60 italic px-1">
-                                        Όλες οι απαιτήσεις της ροής έχουν καλυφθεί.
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-
-            {/* Redesigned Free Electives Slots */}
-            <div className="mb-8 p-5 bg-blue-50/30 dark:bg-blue-500/5 border border-blue-100 dark:border-blue-500/20 rounded-2xl">
-                <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-blue-100 dark:bg-blue-500/20 rounded-lg text-blue-600">
-                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                        </div>
-                        <span className="text-xs font-black text-gray-900 dark:text-gray-100 uppercase tracking-wider">ΕΛΕΥΘΕΡΑ</span>
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                        <span className={`text-lg font-black ${detailedStats.freeCount > 5 ? 'text-rose-500' : 'text-blue-600 dark:text-blue-400'}`}>
-                            {detailedStats.freeCount}
-                        </span>
-                        <span className="text-xs font-bold text-gray-400">/ 5</span>
-                    </div>
-                </div>
-
-                {/* Slot Visualization */}
-                <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map(slot => (
-                        <div 
-                            key={slot}
-                            className={`flex-1 h-2 rounded-full transition-all duration-500 ${
-                                slot <= detailedStats.freeCount 
-                                ? (detailedStats.freeCount > 5 ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.3)]' : 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.3)]')
-                                : 'bg-gray-100 dark:bg-gray-800'
-                            }`}
-                        />
-                    ))}
-                    {detailedStats.freeCount > 5 && (
-                        <div className="px-2 py-0.5 bg-rose-500 text-white text-[9px] font-black rounded-md animate-pulse">
-                            +{detailedStats.freeCount - 5}
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {sidebarWarnings.length > 0 && (
-              <div className="p-5 bg-amber-50/50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/20 rounded-2xl mb-8">
-                 <h4 className="font-bold text-amber-700 dark:text-amber-400 mb-4 text-[10px] uppercase flex items-center gap-2 tracking-[0.15em]">
-                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></div>
-                   ΕΚΚΡΕΜΟΤΗΤΕΣ
-                 </h4>
-                 <ul className="space-y-3">
-                   {sidebarWarnings.map((w, idx) => (
-                     <li key={idx} className="flex gap-2.5 items-start text-[11px] leading-relaxed text-gray-600 dark:text-gray-400 font-medium group">
-                       <span className="mt-0.5 h-3.5 w-3.5 flex items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-600 flex-shrink-0 group-hover:scale-110 transition-transform">
-                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                       </span>
-                       {w}
-                     </li>
-                   ))}
-                 </ul>
               </div>
-            )}
 
-            <div className="pt-6 border-t border-gray-100 dark:border-gray-800 sticky bottom-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl pb-6 lg:pb-0 space-y-4">
-               {/* Premium Save Section */}
-               <div className="grid grid-cols-5 gap-2">
-                 {activeProfileId ? (
-                   <>
-                     <button
-                       onClick={() => {
-                          updateProfile();
-                          const btn = document.getElementById('save-sidebar-btn');
-                          if (btn) {
-                            const oldHtml = btn.innerHTML;
-                            btn.innerHTML = '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>';
-                            btn.classList.add('bg-emerald-500', 'text-white', 'border-emerald-500');
-                            btn.classList.remove('text-indigo-600', 'dark:text-indigo-400');
-                            setTimeout(() => {
-                              btn.innerHTML = oldHtml;
-                              btn.classList.remove('bg-emerald-500', 'text-white', 'border-emerald-500');
-                              btn.classList.add('text-indigo-600', 'dark:text-indigo-400');
-                            }, 2000);
-                          }
-                       }}
-                       id="save-sidebar-btn"
-                       className="col-span-4 py-3.5 rounded-2xl font-black text-indigo-600 dark:text-indigo-400 border-2 border-indigo-100 dark:border-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-500/5 hover:bg-indigo-100 dark:hover:bg-indigo-500/10 transition-all flex items-center justify-center gap-2.5 text-xs uppercase tracking-widest shadow-sm active:scale-[0.98]"
-                     >
-                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                       </svg>
-                       Ενημερωση
-                     </button>
-                     <button
-                       onClick={onSaveRequest}
-                       className="col-span-1 py-3.5 rounded-2xl border-2 border-gray-100 dark:border-gray-800 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-[0.98]"
-                       title="Αποθήκευση ως νέο..."
-                     >
-                       <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                       </svg>
-                     </button>
-                   </>
-                 ) : onSaveRequest && (
-                   <button
-                     onClick={onSaveRequest}
-                     className="col-span-5 py-3.5 rounded-2xl font-black text-indigo-600 dark:text-indigo-400 border-2 border-indigo-100 dark:border-indigo-500/20 bg-indigo-50/50 dark:bg-indigo-500/5 hover:bg-indigo-100 dark:hover:bg-indigo-500/10 transition-all flex items-center justify-center gap-2.5 text-xs uppercase tracking-widest shadow-sm"
-                   >
-                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                     </svg>
-                     Αποθηκευση Προφιλ
-                   </button>
-                 )}
-               </div>
-
-               <button
-                 disabled={!isComplete}
-                 className={`w-full py-4.5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl transition-all transform flex items-center justify-center gap-2.5 active:scale-[0.98]
-                   ${isComplete
-                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-blue-500/25 dark:hover:shadow-indigo-500/20'
-                     : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed shadow-none border border-gray-200/50 dark:border-gray-700/50'}
-                 `}
-                 onClick={() => alert('Η επιλογή ολοκληρώθηκε επιτυχώς!')}
-               >
-                 <span>Ολοκληρωση</span>
-                 {isComplete && (
-                    <div className="p-1 bg-white/20 rounded-full">
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+              {/* Text-based Rules */}
+              <div className="space-y-2">
+                {semanticRules.filter(r => r.type === 'compulsory' && (r.flowCode === 'CORE' || r.ruleId === 'basic_flows')).map((rule) => {
+                  const isMet = rule.isMet;
+                  return (
+                    <div key={rule.ruleId} className={`p-2.5 rounded-xl border flex items-center justify-between transition-all ${isMet ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-300' : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400'}`}>
+                      <div className="flex items-center gap-2">
+                        {isMet ? (
+                          <div className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                            <svg className="w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                          </div>
+                        ) : (
+                          <div className="w-4 h-4 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 shrink-0" />
+                        )}
+                        <span className="text-[10px] font-bold leading-tight">{rule.description}</span>
+                      </div>
+                      <span className="text-[10px] font-black">{rule.currentCount}/{rule.targetCount}</span>
                     </div>
-                 )}
-               </button>
+                  );
+                })}
+              </div>
+
+              {/* Flow Cards */}
+              <div className="space-y-2">
+                {Object.entries(detailedStats.flowStats).map(([key, stat]) => {
+                  const greekKey = FLOW_NAMES[key]?.replace(/Flow |Ροή /g, '') || key;
+                  const flowLabel = greekKey === 'Κορμός' ? 'Κορμός' : `Ροή ${greekKey}`;
+                  if (key === 'CORE') return null; // Handled above
+
+                  return (
+                    <div key={key} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-800 rounded-xl p-3 shadow-sm">
+                      <div className="flex items-center justify-between mb-2">
+                         <div className="flex items-center gap-2">
+                           <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${stat.isComplete ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+                             <span className="text-[10px] font-black">{greekKey}</span>
+                           </div>
+                           <h3 className="font-black text-[10px] text-gray-800 dark:text-gray-100 uppercase tracking-wide">{flowLabel}</h3>
+                         </div>
+                         {stat.isComplete && <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <div>
+                          <div className="flex justify-between text-[8px] font-black uppercase text-gray-400 mb-0.5 px-0.5">
+                            <span>ΥΠΟΧΡΕΩΤΙΚΑ</span>
+                            <span>{stat.requiredCompulsory - stat.missingCompulsory}/{stat.requiredCompulsory}</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div className={`h-full transition-all duration-500 bg-rose-500`} style={{ width: `${((stat.requiredCompulsory - stat.missingCompulsory) / stat.requiredCompulsory) * 100}%` }} />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-[8px] font-black uppercase text-gray-400 mb-0.5 px-0.5">
+                            <span>ΕΠΙΛΟΓΗΣ</span>
+                            <span>{stat.requiredTotal - stat.missingTotal}/{stat.requiredTotal}</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div className={`h-full transition-all duration-500 bg-purple-500`} style={{ width: `${((stat.requiredTotal - stat.missingTotal) / stat.requiredTotal) * 100}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Free Electives */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-800 rounded-xl p-3 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                   <span className="text-[10px] font-black text-gray-800 dark:text-gray-100 uppercase">ΕΛΕΥΘΕΡΑ</span>
+                   <span className="text-[10px] font-black text-gray-600">{detailedStats.freeCount} / 5</span>
+                </div>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <div key={i} className={`w-2 h-2 rounded-full ${i <= detailedStats.freeCount ? 'bg-emerald-500' : 'bg-gray-200 dark:bg-gray-700'}`} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Warnings */}
+              {sidebarWarnings.length > 0 && (
+                <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/50 rounded-xl p-3">
+                  <span className="text-[9px] font-black uppercase text-amber-700 block mb-1">ΠΡΟΕΙΔΟΠΟΙΗΣΕΙΣ</span>
+                  <ul className="space-y-1">
+                    {sidebarWarnings.slice(0, 3).map((w, idx) => (
+                      <li key={idx} className="text-[9px] font-bold text-amber-800 leading-tight flex gap-1.5">
+                        <span className="w-1 h-1 rounded-full bg-amber-400 shrink-0 mt-1"></span>
+                        {w}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 space-y-2">
+              <button
+                onClick={() => {
+                   if (activeProfileId) updateProfile();
+                   else if (onSaveRequest) onSaveRequest();
+                }}
+                disabled={selectedCourseIds.length === 0}
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-white dark:bg-gray-800 text-blue-600 border-2 border-blue-500 rounded-xl text-[10px] font-black transition-all hover:bg-blue-50 active:scale-95 disabled:opacity-50"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                ΑΠΟΘΗΚΕΥΣΗ
+              </button>
+              <button
+                disabled={!isComplete}
+                onClick={() => alert('Η επιλογή ολοκληρώθηκε!')}
+                className={`w-full py-2.5 rounded-xl text-[10px] font-black transition-all active:scale-95 flex items-center justify-center gap-2 ${isComplete ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-gray-100 text-gray-400'}`}
+              >
+                ΟΛΟΚΛΗΡΩΣΗ
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+              </button>
+              
+              <div className="text-[9px] font-bold text-gray-400 text-center leading-tight">
+                Απαιτούνται ακριβώς 25 μαθήματα για τη λήψη πτυχίου.
+              </div>
             </div>
         </div>
       </div>

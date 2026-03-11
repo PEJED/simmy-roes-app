@@ -99,7 +99,7 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
     };
 
     const renderCourseGrid = (courses: Course[], isFlowSection: boolean = false) => (
-        <div className="p-4 bg-white dark:bg-gray-900 flex flex-col space-y-3 animate-in slide-in-from-top-2 duration-300">
+        <div className="p-2 sm:p-3 bg-white dark:bg-gray-900 flex flex-col space-y-2 animate-in slide-in-from-top-2 duration-300">
             {courses.map(c => {
                 const id = String(c.id);
                 const isSelected = selectedCourseIds.includes(id);
@@ -170,13 +170,13 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
     return (
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
             {/* Header */}
-            <div className="bg-gradient-to-r from-gray-50 dark:from-gray-900 to-white dark:to-gray-800 px-6 py-5 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center sticky top-0 z-10 backdrop-blur-sm bg-white/90 dark:bg-gray-900/90">
-                <div className="flex items-center gap-4">
+            <div className="bg-gradient-to-r from-gray-50 dark:from-gray-900 to-white dark:to-gray-800 px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center sticky top-0 z-10 backdrop-blur-sm bg-white/90 dark:bg-gray-900/90">
+                <div className="flex items-center gap-3">
                     <div className="relative">
                         <div className="absolute inset-0 bg-blue-600 blur-sm rounded-full opacity-20"></div>
-                        <span className="relative bg-blue-600 text-white w-10 h-10 rounded-full flex items-center justify-center text-lg font-black shadow-lg shadow-blue-200 z-10">{semester}ο</span>
+                        <span className="relative bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-base font-black shadow-lg shadow-blue-200 z-10">{semester}ο</span>
                     </div>
-                    <h3 className="text-xl font-black text-gray-800 dark:text-gray-100 tracking-tight">Εξάμηνο</h3>
+                    <h3 className="text-lg font-black text-gray-800 dark:text-gray-100 tracking-tight">Εξάμηνο</h3>
                 </div>
                 <div className="flex items-center gap-3">
                     {/* Show Rose Warning if >12, Fuchsia if >7 */}
@@ -203,7 +203,7 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
             <div className="p-1 space-y-1 bg-gray-50/50 dark:bg-gray-800/20">
                 {/* Rule Banners */}
                 {!hideWarnings && semRules.filter(r => r.type !== 'compulsory').length > 0 && (
-                    <div className="p-4 space-y-3">
+                    <div className="p-3 space-y-2">
                          {semRules.filter(r => r.type !== 'compulsory').map(rule => {
                             const flowCode = rule.flowCode;
                             const greekFlow = flowCode ? (FLOW_NAMES[flowCode]?.replace(/Flow |Ροή /g, '') || flowCode) : '';
@@ -220,25 +220,25 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                                 : `${rBgClasses} ${rBorderClasses} ${rTextClasses}`;
 
                             return (
-                                <div key={rule.ruleId} className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 shadow-sm transition-all duration-300 ${isMetClass}`}>
-                                    <div className="flex flex-col gap-2 w-full">
+                                <div key={rule.ruleId} className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 shadow-sm transition-all duration-300 ${isMetClass}`}>
+                                    <div className="flex flex-col gap-1 w-full">
                                         {flowCode && (
-                                            <div className="flex items-center gap-2 pb-1 border-b border-black/5 dark:border-white/10 w-fit">
-                                                <span className={`font-black tracking-wider uppercase flex items-center gap-1.5 opacity-90 text-[11px]`}>
+                                            <div className="flex items-center gap-1.5 pb-0.5 border-b border-black/5 dark:border-white/10 w-fit">
+                                                <span className={`font-black tracking-wider uppercase flex items-center gap-1 opacity-90 text-[10px]`}>
                                                     {flowLabel.normalize("NFD").replace(/[\u0300-\u036f]/g, "")}
-                                                    {rule.isMet && <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                                    {rule.isMet && <svg className="w-3 h-3 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                                                 </span>
                                             </div>
                                         )}
                                         {renderRuleDescription(rule)}
                                     </div>
-                                    <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 mt-2 sm:mt-0">
+                                    <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 mt-1 sm:mt-0">
                                         {rule.isMet ? (
-                                            <span className="text-[10px] font-bold bg-emerald-100/50 dark:bg-emerald-900/40 px-2.5 py-1 rounded-lg text-emerald-700 dark:text-emerald-400 flex items-center gap-1 shadow-sm whitespace-nowrap uppercase tracking-wide border border-emerald-200 dark:border-emerald-800">
+                                            <span className="text-[9px] font-bold bg-emerald-100/50 dark:bg-emerald-900/40 px-2 py-0.5 rounded-lg text-emerald-700 dark:text-emerald-400 flex items-center gap-1 shadow-sm whitespace-nowrap uppercase tracking-wide border border-emerald-200 dark:border-emerald-800">
                                                 ΟΛΟΚΛΗΡΩΘΗΚΕ
                                             </span>
                                         ) : (
-                                            <span className="text-xs font-black bg-white/50 dark:bg-gray-800 px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-sm whitespace-nowrap border border-black/5 dark:border-gray-700 opacity-90">
+                                            <span className="text-[10px] font-black bg-white/50 dark:bg-gray-800 px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm whitespace-nowrap border border-black/5 dark:border-gray-700 opacity-90">
                                                 {rule.currentCount} / {rule.targetCount}
                                             </span>
                                         )}
@@ -252,16 +252,16 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                 {/* Dropdowns */}
                 {data.compulsory.length > 0 && (
                     <div className="border-t border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
-                        <button onClick={() => toggleSection(semester, 'comp')} className="w-full px-6 py-4 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
+                        <button onClick={() => toggleSection(semester, 'comp')} className="w-full px-4 py-2.5 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
                             <div className="flex items-center gap-3">
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isOpen('comp') ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/40 group-hover:text-blue-500 dark:group-hover:text-blue-400'}`}>
-                                   <span className="font-black text-xs">Υ</span>
+                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${isOpen('comp') ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/40 group-hover:text-blue-500 dark:group-hover:text-blue-400'}`}>
+                                   <span className="font-black text-[10px]">Υ</span>
                                 </div>
-                                <span className={`font-bold text-sm uppercase tracking-wide transition-colors ${isOpen('comp') ? 'text-blue-900 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400 group-hover:text-blue-800 dark:group-hover:text-blue-400'}`}>ΥΠΟΧΡΕΩΤΙΚΑ</span>
+                                <span className={`font-bold text-xs uppercase tracking-wide transition-colors ${isOpen('comp') ? 'text-blue-900 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400 group-hover:text-blue-800 dark:group-hover:text-blue-400'}`}>ΥΠΟΧΡΕΩΤΙΚΑ</span>
                             </div>
                             <div className="flex items-center gap-3">
-                                <span className="text-xs font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full">{data.compulsory.length}</span>
-                                <svg className={`w-4 h-4 text-gray-400 dark:text-gray-500 transform transition-transform duration-300 ${isOpen('comp') ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">{data.compulsory.length}</span>
+                                <svg className={`w-3.5 h-3.5 text-gray-400 dark:text-gray-500 transform transition-transform duration-300 ${isOpen('comp') ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             </div>
                         </button>
                         {isOpen('comp') && renderCourseGrid(data.compulsory)}
@@ -270,19 +270,19 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
 
                 {data.flow_elective.length > 0 && (
                     <div className="border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
-                        <button onClick={() => toggleSection(semester, 'flow')} className="w-full px-6 py-4 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
+                        <button onClick={() => toggleSection(semester, 'flow')} className="w-full px-4 py-2.5 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
                              <div className="flex items-center gap-3">
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isOpen('flow') ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 group-hover:bg-purple-50 dark:group-hover:bg-purple-900/40 group-hover:text-purple-500 dark:group-hover:text-purple-400'}`}>
-                                   <span className="font-black text-xs">Ρ</span>
+                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${isOpen('flow') ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 group-hover:bg-purple-50 dark:group-hover:bg-purple-900/40 group-hover:text-purple-500 dark:group-hover:text-purple-400'}`}>
+                                   <span className="font-black text-[10px]">Ρ</span>
                                 </div>
                                 <div className="text-left">
-                                    <span className={`block font-bold text-sm uppercase tracking-wide transition-colors ${isOpen('flow') ? 'text-purple-900 dark:text-purple-300' : 'text-gray-600 dark:text-gray-400 group-hover:text-purple-800 dark:group-hover:text-purple-400'}`}>ΚΑΤ' ΕΠΙΛΟΓΗΝ</span>
-                                    <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium hidden sm:inline-block">Υποχρεωτικά Ροών</span>
+                                    <span className={`block font-bold text-xs uppercase tracking-wide transition-colors ${isOpen('flow') ? 'text-purple-900 dark:text-purple-300' : 'text-gray-600 dark:text-gray-400 group-hover:text-purple-800 dark:group-hover:text-purple-400'}`}>ΚΑΤ' ΕΠΙΛΟΓΗΝ</span>
+                                    <span className="text-[9px] text-gray-400 dark:text-gray-500 font-medium hidden sm:inline-block leading-none">Υποχρεωτικά Ροών</span>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
-                                <span className="text-xs font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full">{data.flow_elective.length}</span>
-                                <svg className={`w-4 h-4 text-gray-400 dark:text-gray-500 transform transition-transform duration-300 ${isOpen('flow') ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">{data.flow_elective.length}</span>
+                                <svg className={`w-3.5 h-3.5 text-gray-400 dark:text-gray-500 transform transition-transform duration-300 ${isOpen('flow') ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             </div>
                         </button>
                         {isOpen('flow') && renderCourseGrid(data.flow_elective, true)}
@@ -291,16 +291,16 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
 
                 {data.free.length > 0 && (
                     <div className="bg-white dark:bg-gray-900">
-                         <button onClick={() => toggleSection(semester, 'free')} className="w-full px-6 py-4 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
+                         <button onClick={() => toggleSection(semester, 'free')} className="w-full px-4 py-2.5 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
                             <div className="flex items-center gap-3">
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isOpen('free') ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/40 group-hover:text-emerald-500 dark:group-hover:text-emerald-400'}`}>
-                                   <span className="font-black text-xs">Ε</span>
+                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${isOpen('free') ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/40 group-hover:text-emerald-500 dark:group-hover:text-emerald-400'}`}>
+                                   <span className="font-black text-[10px]">Ε</span>
                                 </div>
-                                <span className={`font-bold text-sm uppercase tracking-wide transition-colors ${isOpen('free') ? 'text-emerald-900 dark:text-emerald-300' : 'text-gray-600 dark:text-gray-400 group-hover:text-emerald-800 dark:group-hover:text-emerald-400'}`}>ΕΛΕΥΘΕΡΑ / ΑΛΛΑ</span>
+                                <span className={`font-bold text-xs uppercase tracking-wide transition-colors ${isOpen('free') ? 'text-emerald-900 dark:text-emerald-300' : 'text-gray-600 dark:text-gray-400 group-hover:text-emerald-800 dark:group-hover:text-emerald-400'}`}>ΕΛΕΥΘΕΡΑ / ΑΛΛΑ</span>
                             </div>
                             <div className="flex items-center gap-3">
-                                <span className="text-xs font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full">{data.free.length}</span>
-                                <svg className={`w-4 h-4 text-gray-400 dark:text-gray-500 transform transition-transform duration-300 ${isOpen('free') ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">{data.free.length}</span>
+                                <svg className={`w-3.5 h-3.5 text-gray-400 dark:text-gray-500 transform transition-transform duration-300 ${isOpen('free') ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             </div>
                         </button>
                         {isOpen('free') && renderCourseGrid(data.free)}

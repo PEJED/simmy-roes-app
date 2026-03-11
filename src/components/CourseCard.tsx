@@ -70,40 +70,40 @@ const CourseCard: React.FC<CourseCardProps> = memo(({ course, isSelected, onTogg
           </div>
         )}
 
-        <div className="p-4 sm:p-5 flex-grow flex flex-col sm:flex-row items-start sm:items-center justify-between w-full relative gap-4">
+        <div className="p-3 sm:p-3.5 flex-grow flex flex-col sm:flex-row items-start sm:items-center justify-between w-full relative gap-3">
 
           {/* Left Side: Title and Tags */}
-          <div className="flex flex-col gap-2 flex-1 w-full">
-            <h3 className={`font-bold text-base md:text-lg leading-snug pr-8 sm:pr-0 ${isSelected ? 'text-green-900 dark:text-green-400' : 'text-gray-800 dark:text-gray-100 group-hover:text-blue-800 dark:group-hover:text-blue-400'}`}>
+          <div className="flex flex-col gap-1.5 flex-1 w-full">
+            <h3 className={`font-bold text-sm md:text-base leading-snug pr-8 sm:pr-0 ${isSelected ? 'text-green-900 dark:text-green-400' : 'text-gray-800 dark:text-gray-100 group-hover:text-blue-800 dark:group-hover:text-blue-400'}`}>
               {course.title}
             </h3>
 
-            <div className="flex flex-wrap items-center gap-2">
-               <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full whitespace-nowrap border ${badgeColor}`}>
+            <div className="flex flex-wrap items-center gap-1.5">
+               <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap border ${badgeColor}`}>
                   {flowDisplayName}
                </span>
-               <span className="font-mono text-[10px] text-gray-400 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/80 px-1.5 py-0.5 rounded">
+               <span className="font-mono text-[9px] text-gray-400 dark:text-gray-400 bg-gray-100 dark:bg-gray-800/80 px-1.5 py-0.5 rounded">
                   #{course.id}
                </span>
                {course.is_flow_compulsory && (
                   <span className="text-[9px] font-bold text-amber-700 dark:text-amber-500 bg-amber-50 dark:bg-amber-900/30 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800/50">
-                    Υποχρεωτικό Ροής
+                    Υποχρ.
                   </span>
                )}
             </div>
           </div>
 
           {/* Right Side: Semester, ECTS, Info Button */}
-          <div className="flex items-center gap-4 sm:gap-6 shrink-0 w-full sm:w-auto justify-between sm:justify-end mt-2 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100/60 dark:border-gray-700/60">
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0 w-full sm:w-auto justify-between sm:justify-end mt-1 sm:mt-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100/60 dark:border-gray-700/60">
              <div className="flex items-center gap-3">
                 <div className="flex flex-col items-start sm:items-end">
-                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Εξάμηνο</span>
-                  <span className="text-sm font-black text-gray-700 dark:text-gray-200">{course.semester}</span>
+                  <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Εξάμηνο</span>
+                  <span className="text-xs font-black text-gray-700 dark:text-gray-200">{course.semester}</span>
                 </div>
-                <div className="h-6 w-px bg-gray-200 dark:bg-gray-700"></div>
+                <div className="h-5 w-px bg-gray-200 dark:bg-gray-700"></div>
                 <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-black text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700/50 px-2 py-0.5 rounded-md">
-                       {course.ects} <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase">ECTS</span>
+                    <span className="text-xs font-black text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700/50 px-2 py-0.5 rounded-md">
+                       {course.ects} <span className="text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase">ECTS</span>
                     </span>
                 </div>
              </div>
@@ -113,10 +113,10 @@ const CourseCard: React.FC<CourseCardProps> = memo(({ course, isSelected, onTogg
                  e.stopPropagation();
                  setShowModal(true);
                }}
-               className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/40 rounded-full transition-colors shrink-0 z-30"
+               className="p-1 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/40 rounded-full transition-colors shrink-0 z-30"
                title="Λεπτομέρειες"
              >
-               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                </svg>
              </button>
