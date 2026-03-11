@@ -9,9 +9,10 @@ interface SavedProfilesSidebarProps {
 }
 
 const DIRECTION_LABELS: Record<string, string> = {
-  ECE: 'ΗΜΥ',
-  EE: 'ΗΜ',
-  CE: 'ΜΥ',
+  Electronics: 'Κατεύθυνση Ηλεκτρονικής',
+  Informatics: 'Κατεύθυνση Πληροφορικής',
+  Communications: 'Κατεύθυνση Επικοινωνιών',
+  Energy: 'Κατεύθυνση Ενέργειας',
 };
 
 function formatDate(iso: string): string {
@@ -34,7 +35,10 @@ function ProfileCard({
 }) {
   const activeFlows = Object.entries(profile.flowSelections)
     .filter(([, v]) => v !== 'none')
-    .map(([k]) => FLOW_NAMES[k]?.replace(/^(Ροή |Flow )/, '') || k);
+    .map(([k, v]) => {
+      const name = FLOW_NAMES[k]?.replace(/^(Ροή |Flow )/, '') || k;
+      return { id: k, name, isHalf: v === 'half' };
+    });
 
   return (
     <div className="group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all duration-200">
@@ -53,8 +57,8 @@ function ProfileCard({
             </span>
           )}
           {activeFlows.map(f => (
-            <span key={f} className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50">
-              Ροή {f}
+            <span key={f.id} className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800/50">
+              Ροή {f.name} {f.isHalf && '(Μισή)'}
             </span>
           ))}
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600">

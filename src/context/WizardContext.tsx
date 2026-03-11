@@ -30,6 +30,7 @@ interface WizardContextType extends WizardState {
   setSelectedCombinationId: (id: string | null) => void;
   setFlowSelection: (flowCode: string, selection: FlowSelection) => void;
   resetFlowSelections: () => void;
+  resetWizard: () => void;
   toggleCourse: (courseId: string) => void;
   validation: { isValid: boolean; error: string | null };
   lockedCourseIds: string[];
@@ -149,6 +150,15 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setFlowSelectionsState({});
   }, []);
 
+  const resetWizard = useCallback(() => {
+    setStepState(1);
+    setDirectionState(null);
+    setSelectedCombinationIdState(null);
+    setFlowSelectionsState({});
+    setSelectedCourseIds([]);
+    setActiveProfileId(null);
+  }, []);
+
   const toggleCourse = useCallback((courseId: string) => {
     if (lockedCourseIds.includes(courseId)) return;
     setSelectedCourseIds(prev =>
@@ -215,6 +225,7 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setSelectedCombinationId,
     setFlowSelection,
     resetFlowSelections,
+    resetWizard,
     toggleCourse,
     validation,
     lockedCourseIds,

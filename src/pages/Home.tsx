@@ -6,12 +6,17 @@ import Step3Courses from '../components/Wizard/Step3_Courses';
 import ThemeToggle from '../components/ThemeToggle';
 import SavedProfilesSidebar from '../components/SavedProfilesSidebar';
 import SaveProfileModal from '../components/SaveProfileModal';
+import ConfirmSaveModal from '../components/ConfirmSaveModal';
+import ConfirmRestartModal from '../components/ConfirmRestartModal';
 
 const WizardOrchestrator: React.FC = () => {
-  const { step, setStep, direction, selectedCombinationId, savedProfiles, saveProfile, activeProfileId, updateProfile } = useWizard();
+  const { step, setStep, direction, selectedCombinationId, flowSelections, savedProfiles, saveProfile, activeProfileId, updateProfile, resetWizard } = useWizard();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [restartModalOpen, setRestartModalOpen] = useState(false);
+  const [pendingRestart, setPendingRestart] = useState(false);
 
   const handleStepClick = (targetStep: number) => {
     if (targetStep === 1) {
@@ -26,6 +31,42 @@ const WizardOrchestrator: React.FC = () => {
   // Default name for a new profile, e.g. "Αρχείο 3"
   const defaultProfileName = `Αρχείο ${savedProfiles.length + 1}`;
 
+  const executeSave = () => {
+    updateProfile();
+    // Provide simple visual feedback to user
+    const btn = document.getElementById('save-header-btn');
+    if (btn) {
+      const oldHtml = btn.innerHTML;
+      btn.innerHTML = '<span class="hidden sm:inline">Αποθηκεύτηκε!</span><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>';
+      btn.classList.add('bg-green-100', 'dark:bg-green-900/50', 'text-green-700', 'dark:text-green-300');
+      setTimeout(() => {
+        if (!btn) return;
+        btn.innerHTML = oldHtml;
+        btn.classList.remove('bg-green-100', 'dark:bg-green-900/50', 'text-green-700', 'dark:text-green-300');
+      }, 2000);
+    }
+  };
+
+  const handleSaveClick = () => {
+    if (!activeProfileId) return;
+    const activeProfile = savedProfiles.find(p => p.id === activeProfileId);
+    if (!activeProfile) return;
+
+    // Check if direction changed
+    const directionChanged = activeProfile.direction !== direction;
+    
+    // Check if flows changed
+    const oldFlowsStr = JSON.stringify(activeProfile.flowSelections || {});
+    const newFlowsStr = JSON.stringify(flowSelections || {});
+    const flowsChanged = oldFlowsStr !== newFlowsStr;
+
+    if (directionChanged || flowsChanged) {
+      setConfirmModalOpen(true);
+    } else {
+      executeSave();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-20 transition-colors duration-300">
       {/* Sidebar + Modal (always mounted) */}
@@ -36,9 +77,49 @@ const WizardOrchestrator: React.FC = () => {
       />
       <SaveProfileModal
         isOpen={saveModalOpen}
-        onClose={() => setSaveModalOpen(false)}
-        onSave={saveProfile}
+        onClose={() => {
+          setSaveModalOpen(false);
+          setPendingRestart(false);
+        }}
+        onSave={(name) => {
+          saveProfile(name);
+          if (pendingRestart) {
+            resetWizard();
+            setPendingRestart(false);
+          }
+        }}
         defaultName={defaultProfileName}
+      />
+      <ConfirmSaveModal
+        isOpen={confirmModalOpen}
+        onClose={() => setConfirmModalOpen(false)}
+        onConfirmSave={() => {
+          setConfirmModalOpen(false);
+          executeSave();
+        }}
+        onSaveAsNew={() => {
+          setConfirmModalOpen(false);
+          setSaveModalOpen(true);
+        }}
+      />
+      <ConfirmRestartModal
+        isOpen={restartModalOpen}
+        onClose={() => setRestartModalOpen(false)}
+        onConfirm={() => {
+          resetWizard();
+          setRestartModalOpen(false);
+        }}
+        onSaveAndConfirm={() => {
+          if (activeProfileId) {
+            updateProfile();
+            resetWizard();
+            setRestartModalOpen(false);
+          } else {
+            setPendingRestart(true);
+            setRestartModalOpen(false);
+            setSaveModalOpen(true);
+          }
+        }}
       />
 
       {/* Header - Sticky with High Z-Index */}
@@ -155,20 +236,7 @@ const WizardOrchestrator: React.FC = () => {
               {activeProfileId ? (
                  <div className="flex items-stretch rounded-xl border border-indigo-200 dark:border-indigo-800/50 bg-indigo-50 dark:bg-indigo-900/30 overflow-hidden shadow-sm shrink-0">
                     <button
-                      onClick={() => {
-                        updateProfile();
-                        // Provide simple visual feedback to user
-                        const btn = document.getElementById('save-header-btn');
-                        if (btn) {
-                          const oldHtml = btn.innerHTML;
-                          btn.innerHTML = '<span class="hidden sm:inline">Αποθηκεύτηκε!</span><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>';
-                          btn.classList.add('bg-green-100', 'dark:bg-green-900/50', 'text-green-700', 'dark:text-green-300');
-                          setTimeout(() => {
-                            btn.innerHTML = oldHtml;
-                            btn.classList.remove('bg-green-100', 'dark:bg-green-900/50', 'text-green-700', 'dark:text-green-300');
-                          }, 2000);
-                        }
-                      }}
+                      onClick={handleSaveClick}
                       id="save-header-btn"
                       className="flex items-center gap-1.5 px-3 py-2 text-indigo-700 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
                       title="Αποθήκευση αλλαγών στο τρέχον αρχείο"
@@ -202,7 +270,16 @@ const WizardOrchestrator: React.FC = () => {
                 </button>
               )}
 
-              <div className="ml-2 pl-2 md:ml-4 md:pl-4 border-l border-gray-200 dark:border-gray-700 flex items-center">
+              <div className="ml-2 pl-2 md:ml-4 md:pl-4 border-l border-gray-200 dark:border-gray-700 flex items-center gap-2">
+                <button
+                  onClick={() => setRestartModalOpen(true)}
+                  className="p-2 rounded-xl text-gray-400 dark:text-gray-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                  title="Εκκαθάριση (Ξεκινήστε από την αρχή)"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
                 <ThemeToggle />
               </div>
             </div>

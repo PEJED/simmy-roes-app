@@ -157,7 +157,7 @@ export const calculateDetailedStats = (
     // --- 3. Global Limits ---
 
     const freeElectives = selectedCourses.filter(c => {
-        if (c.flow_code === 'P') return false; // Κορμός courses are never free electives
+        if (c.flow_code === 'P') return false; // Κορμός courses are never *automatically* free electives
         if (c.flow_code === HUMANITIES || c.type === 'humanities') return false; // Tracked separately
         if (c.flow_code === NON_FLOW) return false; // Tracked separately
         
@@ -172,6 +172,13 @@ export const calculateDetailedStats = (
              extraFlowCoursesCount += (stat.totalSelected - stat.requiredTotal);
          }
     });
+
+    // P courses (Core) extra calculation
+    // Max required core courses is 2 (3035 + 1 from {3068, 3450})
+    const pCoursesCount = selectedCourses.filter(c => c.flow_code === 'P').length;
+    if (pCoursesCount > 2) {
+        extraFlowCoursesCount += (pCoursesCount - 2);
+    }
 
     const freeCount = freeElectives.length + extraFlowCoursesCount;
     if (freeCount > 5) {
