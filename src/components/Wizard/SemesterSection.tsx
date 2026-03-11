@@ -98,7 +98,7 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
         return <span className="font-bold text-gray-800 dark:text-gray-200">{rule.description}</span>;
     };
 
-    const renderCourseGrid = (courses: Course[]) => (
+    const renderCourseGrid = (courses: Course[], isFlowSection: boolean = false) => (
         <div className="p-4 bg-white dark:bg-gray-900 flex flex-col space-y-3 animate-in slide-in-from-top-2 duration-300">
             {courses.map(c => {
                 const id = String(c.id);
@@ -146,15 +146,15 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                     } else if (blockingRule) {
                         disabled = true;
                         tooltip = `Κανόνας ολοκληρώθηκε: ${blockingRule.description}`;
-                    } else if (c.flow_code && satisfiedFlows.has(c.flow_code) && data.flow_elective.some(x => x.id === c.id)) {
+                    } else if (isFlowSection && c.flow_code && satisfiedFlows.has(c.flow_code)) {
                         disabled = true;
-                        tooltip = "Η ροή έχει ήδη ολοκληρωθεί";
+                        tooltip = "Η ροή έχει ήδη ολοκληρωθεί. Το μάθημα είναι πλέον διαθέσιμο στα Ελεύθερα.";
                     }
                 }
 
                 return (
                     <CourseCard
-                        key={c.id}
+                        key={`${isFlowSection ? 'flow-' : 'free-'}${c.id}`} // Ensure unique keys if rendered twice in same semester (though technically they are in different grids, React doesn't mind unless they are siblings, but it's safer)
                         course={c}
                         isSelected={isSelected}
                         onToggle={() => toggleCourse(id)}
@@ -309,7 +309,7 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                                 <svg className={`w-4 h-4 text-gray-400 dark:text-gray-500 transform transition-transform duration-300 ${isOpen('flow') ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             </div>
                         </button>
-                        {isOpen('flow') && renderCourseGrid(data.flow_elective)}
+                        {isOpen('flow') && renderCourseGrid(data.flow_elective, true)}
                     </div>
                 )}
 

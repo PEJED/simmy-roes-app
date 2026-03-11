@@ -166,7 +166,14 @@ export const calculateDetailedStats = (
         return isFreeFlow || isNonActiveFlow;
     });
 
-    const freeCount = freeElectives.length;
+    let extraFlowCoursesCount = 0;
+    Object.values(flowStats).forEach(stat => {
+         if (stat.totalSelected > stat.requiredTotal) {
+             extraFlowCoursesCount += (stat.totalSelected - stat.requiredTotal);
+         }
+    });
+
+    const freeCount = freeElectives.length + extraFlowCoursesCount;
     if (freeCount > 5) {
         warnings.push(`Έχετε επιλέξει ${freeCount} ελεύθερα μαθήματα (Μέγιστο: 5).`);
     }

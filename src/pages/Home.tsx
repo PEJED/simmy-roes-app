@@ -8,7 +8,7 @@ import SavedProfilesSidebar from '../components/SavedProfilesSidebar';
 import SaveProfileModal from '../components/SaveProfileModal';
 
 const WizardOrchestrator: React.FC = () => {
-  const { step, setStep, direction, selectedCombinationId, savedProfiles, saveProfile } = useWizard();
+  const { step, setStep, direction, selectedCombinationId, savedProfiles, saveProfile, activeProfileId, updateProfile } = useWizard();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
@@ -152,16 +152,55 @@ const WizardOrchestrator: React.FC = () => {
               </div>
 
               {/* Save button (header — always visible) */}
-              <button
-                onClick={() => setSaveModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800/50 text-indigo-700 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors shrink-0"
-                title="Αποθήκευση επιλογών"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-                </svg>
-                <span className="hidden sm:inline">Αποθήκευση</span>
-              </button>
+              {activeProfileId ? (
+                 <div className="flex items-stretch rounded-xl border border-indigo-200 dark:border-indigo-800/50 bg-indigo-50 dark:bg-indigo-900/30 overflow-hidden shadow-sm shrink-0">
+                    <button
+                      onClick={() => {
+                        updateProfile();
+                        // Provide simple visual feedback to user
+                        const btn = document.getElementById('save-header-btn');
+                        if (btn) {
+                          const oldHtml = btn.innerHTML;
+                          btn.innerHTML = '<span class="hidden sm:inline">Αποθηκεύτηκε!</span><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>';
+                          btn.classList.add('bg-green-100', 'dark:bg-green-900/50', 'text-green-700', 'dark:text-green-300');
+                          setTimeout(() => {
+                            btn.innerHTML = oldHtml;
+                            btn.classList.remove('bg-green-100', 'dark:bg-green-900/50', 'text-green-700', 'dark:text-green-300');
+                          }, 2000);
+                        }
+                      }}
+                      id="save-header-btn"
+                      className="flex items-center gap-1.5 px-3 py-2 text-indigo-700 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+                      title="Αποθήκευση αλλαγών στο τρέχον αρχείο"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                      </svg>
+                      <span className="hidden sm:inline">Αποθήκευση</span>
+                    </button>
+                    <div className="w-[1px] bg-indigo-200 dark:bg-indigo-800/50 my-1"></div>
+                    <button
+                      onClick={() => setSaveModalOpen(true)}
+                      className="flex items-center px-2 py-2 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+                      title="Αποθήκευση ως νέο αρχείο..."
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                 </div>
+              ) : (
+                <button
+                  onClick={() => setSaveModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800/50 text-indigo-700 dark:text-indigo-300 text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors shrink-0 shadow-sm"
+                  title="Αποθήκευση επιλογών"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                  </svg>
+                  <span className="hidden sm:inline">Αποθήκευση</span>
+                </button>
+              )}
 
               <div className="ml-2 pl-2 md:ml-4 md:pl-4 border-l border-gray-200 dark:border-gray-700 flex items-center">
                 <ThemeToggle />

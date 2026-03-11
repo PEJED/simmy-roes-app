@@ -21,6 +21,7 @@ interface WizardState {
   selectedCombinationId: string | null;
   flowSelections: Record<string, FlowSelection>;
   selectedCourseIds: string[];
+  activeProfileId: string | null;
 }
 
 interface WizardContextType extends WizardState {
@@ -34,7 +35,9 @@ interface WizardContextType extends WizardState {
   lockedCourseIds: string[];
   // Profile management
   savedProfiles: SavedProfile[];
+  activeProfileId: string | null;
   saveProfile: (name: string) => void;
+  updateProfile: () => void;
   loadProfile: (id: string) => void;
   deleteProfile: (id: string) => void;
 }
@@ -83,16 +86,19 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [selectedCourseIds, setSelectedCourseIds] = useState<string[]>(
     persisted?.selectedCourseIds ?? []
   );
+  const [activeProfileId, setActiveProfileId] = useState<string | null>(
+    persisted?.activeProfileId ?? null
+  );
 
   const [savedProfiles, setSavedProfiles] = useState<SavedProfile[]>(loadProfiles);
 
   // ── Auto-persist current state on every change ──────────────────────────────
   useEffect(() => {
-    const state: WizardState = { step, direction, selectedCombinationId, flowSelections, selectedCourseIds };
+    const state: WizardState = { step, direction, selectedCombinationId, flowSelections, selectedCourseIds, activeProfileId };
     try {
       localStorage.setItem(CURRENT_STATE_KEY, JSON.stringify(state));
     } catch { /* storage full / private browsing */ }
-  }, [step, direction, selectedCombinationId, flowSelections, selectedCourseIds]);
+  }, [step, direction, selectedCombinationId, flowSelections, selectedCourseIds, activeProfileId]);
 
   // ── Persist profiles list ──────────────────────────────────────────────────
   useEffect(() => {
@@ -152,8 +158,9 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // ── Profile CRUD ───────────────────────────────────────────────────────────
   const saveProfile = useCallback((name: string) => {
+    const newId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const profile: SavedProfile = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      id: newId,
       name,
       createdAt: new Date().toISOString(),
       direction,
@@ -163,7 +170,20 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       step,
     };
     setSavedProfiles(prev => [profile, ...prev]);
+    setActiveProfileId(newId);
   }, [direction, selectedCombinationId, flowSelections, selectedCourseIds, step]);
+
+  const updateProfile = useCallback(() => {
+    if (!activeProfileId) return;
+    setSavedProfiles(prev => prev.map(p => p.id === activeProfileId ? {
+      ...p,
+      direction,
+      selectedCombinationId,
+      flowSelections,
+      selectedCourseIds,
+      step,
+    } : p));
+  }, [activeProfileId, direction, selectedCombinationId, flowSelections, selectedCourseIds, step]);
 
   const loadProfile = useCallback((id: string) => {
     const profile = savedProfiles.find(p => p.id === id);
@@ -173,11 +193,15 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setFlowSelectionsState(profile.flowSelections);
     setSelectedCourseIds(profile.selectedCourseIds);
     setStepState(profile.step ?? (profile.selectedCombinationId ? 3 : profile.direction ? 2 : 1));
+    setActiveProfileId(profile.id);
   }, [savedProfiles]);
 
   const deleteProfile = useCallback((id: string) => {
     setSavedProfiles(prev => prev.filter(p => p.id !== id));
-  }, []);
+    if (activeProfileId === id) {
+      setActiveProfileId(null);
+    }
+  }, [activeProfileId]);
 
   // ─────────────────────────────────────────────────────────────────────────
   const value: WizardContextType = {
@@ -195,7 +219,9 @@ export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     validation,
     lockedCourseIds,
     savedProfiles,
+    activeProfileId,
     saveProfile,
+    updateProfile,
     loadProfile,
     deleteProfile,
   };

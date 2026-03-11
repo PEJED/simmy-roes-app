@@ -28,7 +28,7 @@ interface Step3CoursesProps {
 }
 
 const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
-  const { direction, flowSelections, selectedCourseIds, toggleCourse, setStep, lockedCourseIds } = useWizard();
+  const { direction, flowSelections, selectedCourseIds, toggleCourse, setStep, lockedCourseIds, activeProfileId, updateProfile } = useWizard();
 
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
@@ -60,8 +60,53 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
       setExpandedSections(prev => ({ ...prev, [`${sem}-${section}`]: !prev[`${sem}-${section}`] }));
   }, []);
 
-  const getCourseCategory = (course: typeof courses[0]) => {
-    // Κορμός courses (flow_code 'P') always go in compulsory section
+  const ruleStatuses = useMemo(() => {
+    return evaluateRules(selectedCourseIds, flowSelections, direction);
+  }, [selectedCourseIds, flowSelections, direction]);
+
+  const ruleColors = useMemo(() => {
+      const colors: Record<string, string> = {};
+      ruleStatuses.forEach((r, idx) => {
+          colors[r.ruleId] = COLORS[idx % COLORS.length];
+      });
+      return colors;
+  }, [ruleStatuses.length]);
+
+  const detailedStats = useMemo(() => {
+    const selected = courses.filter(c => selectedCourseIds.includes(String(c.id)));
+    return calculateDetailedStats(selected, direction, flowSelections);
+  }, [selectedCourseIds, flowSelections, direction]);
+
+  const satisfiedFlows = useMemo(() => {
+      const set = new Set<string>();
+      if (detailedStats && detailedStats.flowStats) {
+          Object.entries(detailedStats.flowStats).forEach(([flowCode, stat]) => {
+              if (stat.isComplete) {
+                  set.add(flowCode);
+              }
+          });
+      }
+      return set;
+  }, [detailedStats.flowStats]);
+
+  const generalWarnings = detailedStats.warnings;
+
+  const sidebarWarnings = useMemo(() => {
+      return generalWarnings.filter(w => !w.includes('Υπέρβαση ορίου μαθημάτων') && !w.includes('>7'));
+  }, [generalWarnings]);
+
+  const isComplete = generalWarnings.length === 0;
+
+  const semanticRules = useMemo(() => {
+      const activeFlowCodes = Object.keys(flowSelections).filter(k => flowSelections[k] !== 'none');
+      return ruleStatuses.filter(r => {
+          if (!r.flowCode) return true;
+          if (r.flowCode === 'P') return true;
+          return activeFlowCodes.includes(r.flowCode);
+      });
+  }, [ruleStatuses, flowSelections]);
+
+  const getCourseCategory = useCallback((course: typeof courses[0]) => {
     if (course.flow_code === 'P') return 'compulsory';
     
     const flowSel = flowSelections[course.flow_code as string];
@@ -71,16 +116,12 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
 
         const id = String(course.id);
         if (rule?.compulsory?.includes(id)) return 'compulsory';
+        if (rule?.options?.some(opt => opt.includes(id))) return 'compulsory';
 
-        const inPool = rule?.pool?.includes(id);
-        const inOptions = rule?.options?.some(opt => opt.includes(id));
-
-        if (inOptions) return 'compulsory';
-        if (inPool) return 'flow_elective';
-        return 'flow_elective';
+        return 'flow_elective_and_free';
     }
     return 'free';
-  };
+  }, [flowSelections, direction]);
 
   const coursesBySemester = useMemo(() => {
     const grouped: Record<number, {
@@ -106,9 +147,14 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
       semCourses.forEach(c => {
           const cat = getCourseCategory(c);
           
-          if (cat === 'compulsory') compulsory.push(c);
-          else if (cat === 'flow_elective') flow_elective.push(c);
-          else free.push(c);
+          if (cat === 'compulsory') {
+              compulsory.push(c);
+          } else if (cat === 'flow_elective_and_free') {
+              flow_elective.push(c);
+              free.push(c);
+          } else {
+              free.push(c);
+          }
 
           if (selectedCourseIds.includes(String(c.id))) {
               totalSelected++;
@@ -118,7 +164,6 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
           }
       });
 
-      // Sort all categories by flow_code (Κορμός 'P' always first), then alphabetically
       const sortByFlow = (a: typeof courses[0], b: typeof courses[0]) => {
           if (a.flow_code === 'P' && b.flow_code !== 'P') return -1;
           if (a.flow_code !== 'P' && b.flow_code === 'P') return 1;
@@ -135,7 +180,7 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
       grouped[sem] = { compulsory, flow_elective, free, totalSelected, totalECTS, totalLectureHours, totalLabHours };
     });
     return grouped;
-  }, [flowSelections, direction, selectedCourseIds]);
+  }, [flowSelections, direction, selectedCourseIds, getCourseCategory]);
 
   const searchResults = useMemo(() => {
       if (!searchTerm.trim()) return [];
@@ -152,7 +197,7 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
 
   const handleCourseJump = (course: typeof courses[0]) => {
       const cat = getCourseCategory(course);
-      const sectionKey = cat === 'compulsory' ? 'comp' : (cat === 'flow_elective' ? 'flow' : 'free');
+      const sectionKey = cat === 'compulsory' ? 'comp' : (cat === 'flow_elective_and_free' ? 'flow' : 'free');
       
       // Expand section
       setExpandedSections(prev => ({
@@ -177,56 +222,7 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
       }, 150);
   };
 
-  const ruleStatuses = useMemo(() => {
-    return evaluateRules(selectedCourseIds, flowSelections, direction);
-  }, [selectedCourseIds, flowSelections, direction]);
-
-  const ruleColors = useMemo(() => {
-      const colors: Record<string, string> = {};
-      ruleStatuses.forEach((r, idx) => {
-          colors[r.ruleId] = COLORS[idx % COLORS.length];
-      });
-      return colors;
-  }, [ruleStatuses.length]);
-
-  // Use the new centralized stats calculation
-  const detailedStats = useMemo(() => {
-    const selected = courses.filter(c => selectedCourseIds.includes(String(c.id)));
-    return calculateDetailedStats(selected, direction, flowSelections);
-  }, [selectedCourseIds, flowSelections, direction]);
-
-  const generalWarnings = detailedStats.warnings;
-
-  // Sidebar Warnings: Exclude ">7 courses" warning
-  const sidebarWarnings = useMemo(() => {
-      return generalWarnings.filter(w => !w.includes('Υπέρβαση ορίου μαθημάτων') && !w.includes('>7'));
-  }, [generalWarnings]);
-
-  const isComplete = generalWarnings.length === 0;
-
-  // Filter semantic rules: Keep only flow rules that match active selections + global 'P' rules
-  const semanticRules = useMemo(() => {
-      const activeFlowCodes = Object.keys(flowSelections).filter(k => flowSelections[k] !== 'none');
-      return ruleStatuses.filter(r => {
-          if (!r.flowCode) return true; // Keep general rules (like semester limits)
-          if (r.flowCode === 'P') return true; // Always show global compulsory rules (XOR etc.)
-          return activeFlowCodes.includes(r.flowCode);
-      });
-  }, [ruleStatuses, flowSelections]);
-
-
-  // Identify satisfied flows for green borders and greyed-out electives
-  const satisfiedFlows = useMemo(() => {
-      const set = new Set<string>();
-      if (detailedStats && detailedStats.flowStats) {
-          Object.entries(detailedStats.flowStats).forEach(([flowCode, stat]) => {
-              if (stat.isComplete) {
-                  set.add(flowCode);
-              }
-          });
-      }
-      return set;
-  }, [detailedStats.flowStats]);
+  // ruleStatuses, detailedStats, etc. moved up
 
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [hideWarnings, setHideWarnings] = useState(false);
@@ -548,7 +544,42 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
 
             <div className="pt-4 border-t border-gray-100 dark:border-gray-800 sticky bottom-0 bg-white dark:bg-gray-900 pb-6 lg:pb-0 space-y-3">
                {/* Save profile button */}
-               {onSaveRequest && (
+               {activeProfileId ? (
+                 <div className="flex items-stretch rounded-xl border-2 border-indigo-200 dark:border-indigo-800/50 bg-indigo-50 dark:bg-indigo-900/20 overflow-hidden shadow-sm">
+                   <button
+                     onClick={() => {
+                        updateProfile();
+                        const btn = document.getElementById('save-sidebar-btn');
+                        if (btn) {
+                          const oldHtml = btn.innerHTML;
+                          btn.innerHTML = '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg> Αποθηκεύτηκε!';
+                          btn.classList.add('bg-green-100', 'dark:bg-green-900/50', 'text-green-700', 'dark:text-green-300');
+                          setTimeout(() => {
+                            btn.innerHTML = oldHtml;
+                            btn.classList.remove('bg-green-100', 'dark:bg-green-900/50', 'text-green-700', 'dark:text-green-300');
+                          }, 2000);
+                        }
+                     }}
+                     id="save-sidebar-btn"
+                     className="flex-1 py-3 font-bold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors flex items-center justify-center gap-2 text-sm"
+                   >
+                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                     </svg>
+                     Αποθήκευση
+                   </button>
+                   <div className="w-[2px] bg-indigo-200 dark:bg-indigo-800/50"></div>
+                   <button
+                     onClick={onSaveRequest}
+                     className="px-4 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors flex items-center justify-center"
+                     title="Αποθήκευση ως νέο αρχείο..."
+                   >
+                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                     </svg>
+                   </button>
+                 </div>
+               ) : onSaveRequest && (
                  <button
                    onClick={onSaveRequest}
                    className="w-full py-3 rounded-xl font-bold text-indigo-700 dark:text-indigo-300 border-2 border-indigo-200 dark:border-indigo-800/50 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors flex items-center justify-center gap-2 text-sm"
