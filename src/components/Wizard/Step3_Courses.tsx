@@ -28,7 +28,7 @@ interface Step3CoursesProps {
 }
 
 const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
-  const { direction, flowSelections, selectedCourseIds, toggleCourse, setStep, lockedCourseIds, activeProfileId, updateProfile } = useWizard();
+  const { direction, flowSelections, selectedCourseIds, toggleCourse, lockedCourseIds, activeProfileId, updateProfile } = useWizard();
 
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
