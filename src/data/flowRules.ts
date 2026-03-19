@@ -130,8 +130,8 @@ export const FLOW_RULES: Record<string, { full: FlowRule; half: FlowRule | ((dir
       strict: true
     },
     half: {
-      description: "τρία εκ των 3196, 3292, 3306, 3260, 3334",
-      pool: ['3196', '3292', '3306', '3260', '3334'],
+      description: "τρία εκ των 3196, 3292, 3306, 3260",
+      pool: ['3196', '3292', '3306', '3260'],
       required_count: 3,
       strict: true
     }

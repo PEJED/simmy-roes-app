@@ -128,9 +128,9 @@ const CourseModal: React.FC<CourseModalProps> = ({ course, isOpen, onClose }) =>
              <div className="bg-white dark:bg-gray-800/80 p-4 rounded-2xl border border-gray-100 dark:border-gray-750 shadow-sm flex flex-col justify-center">
                 <span className="block text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-widest mb-2 text-center">Ωρες Διδασκαλίας</span>
                 <div className="flex justify-center gap-4 text-sm font-bold text-gray-800 dark:text-gray-200">
-                    <div className="flex flex-col items-center"><span className="text-lg">{course.lecture_hours || 0}</span><span className="text-[9px] text-gray-400 dark:text-gray-500">ΘΕΩΡΙΑ</span></div>
+                    <div className="flex flex-col items-center"><span className="text-lg">{course.lecture_hours || 0}</span><span className="text-[9px] text-gray-400 dark:text-gray-500">Θεωρία</span></div>
                     <div className="w-px h-full bg-gray-100 dark:bg-gray-700"></div>
-                    <div className="flex flex-col items-center"><span className="text-lg">{course.lab_hours || 0}</span><span className="text-[9px] text-gray-400 dark:text-gray-500">ΕΡΓΑΣΤ.</span></div>
+                    <div className="flex flex-col items-center"><span className="text-lg">{course.lab_hours || 0}</span><span className="text-[9px] text-gray-400 dark:text-gray-500">Εργαστ.</span></div>
                 </div>
              </div>
           </div>

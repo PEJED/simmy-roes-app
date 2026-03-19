@@ -183,16 +183,16 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                     {data.totalSelected > 12 ? (
                         <span className="flex text-[10px] font-bold text-rose-600 dark:text-rose-300 bg-rose-50 dark:bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-100 dark:border-rose-500/30 items-center gap-1.5 uppercase tracking-wide">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                            &gt;12 Μαθηματα
+                            &gt;12 Μαθήματα
                         </span>
                     ) : data.totalSelected > 7 && (
                         <span className="flex text-[10px] font-bold text-fuchsia-600 dark:text-fuchsia-300 bg-fuchsia-50 dark:bg-fuchsia-500/10 px-2.5 py-1 rounded-full border border-fuchsia-100 dark:border-fuchsia-500/30 items-center gap-1.5 uppercase tracking-wide">
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                            &gt;7 Μαθηματα
+                            &gt;7 Μαθήματα
                         </span>
                     )}
                     <div className="flex flex-col items-end px-3 py-1">
-                        <span className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Αριθμος Μαθηματων</span>
+                        <span className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">Αριθμός Μαθημάτων</span>
                         <span className={`text-lg font-black leading-none ${data.totalSelected > 12 ? 'text-rose-600 dark:text-rose-400' : 'text-gray-800 dark:text-gray-100'}`}>
                            {data.totalSelected}
                         </span>
@@ -201,10 +201,17 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
             </div>
 
             <div className="p-1 space-y-1 bg-gray-50/50 dark:bg-gray-800/20">
-                {/* Rule Banners */}
-                {!hideWarnings && semRules.filter(r => r.type !== 'compulsory').length > 0 && (
+                {/* Rule Banners - only show rules relevant to this semester */}
+                {!hideWarnings && (() => {
+                    const semesterCourseIds = new Set(
+                        courses.filter(c => c.semester === semester).map(c => String(c.id))
+                    );
+                    const relevantRules = semRules
+                        .filter(r => r.type !== 'compulsory')
+                        .filter(r => r.involvedCourseIds.some(id => semesterCourseIds.has(id)));
+                    return relevantRules.length > 0 && (
                     <div className="p-3 space-y-2">
-                         {semRules.filter(r => r.type !== 'compulsory').map(rule => {
+                         {relevantRules.map(rule => {
                             const flowCode = rule.flowCode;
                             const greekFlow = flowCode ? (FLOW_NAMES[flowCode]?.replace(/Flow |Ροή /g, '') || flowCode) : '';
                             const flowLabel = flowCode ? (greekFlow === 'Κορμός' ? 'Κορμός' : `Ροή ${greekFlow}`) : '';
@@ -235,7 +242,7 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                                     <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 mt-1 sm:mt-0">
                                         {rule.isMet ? (
                                             <span className="text-[9px] font-bold bg-emerald-100/50 dark:bg-emerald-900/40 px-2 py-0.5 rounded-lg text-emerald-700 dark:text-emerald-400 flex items-center gap-1 shadow-sm whitespace-nowrap uppercase tracking-wide border border-emerald-200 dark:border-emerald-800">
-                                                ΟΛΟΚΛΗΡΩΘΗΚΕ
+                                                Ολοκληρώθηκε
                                             </span>
                                         ) : (
                                             <span className="text-[10px] font-black bg-white/50 dark:bg-gray-800 px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm whitespace-nowrap border border-black/5 dark:border-gray-700 opacity-90">
@@ -247,7 +254,8 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                             );
                         })}
                     </div>
-                )}
+                    );
+                })()}
 
                 {/* Dropdowns */}
                 {data.compulsory.length > 0 && (
@@ -257,7 +265,7 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${isOpen('comp') ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/40 group-hover:text-blue-500 dark:group-hover:text-blue-400'}`}>
                                    <span className="font-black text-[10px]">Υ</span>
                                 </div>
-                                <span className={`font-bold text-xs uppercase tracking-wide transition-colors ${isOpen('comp') ? 'text-blue-900 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400 group-hover:text-blue-800 dark:group-hover:text-blue-400'}`}>ΥΠΟΧΡΕΩΤΙΚΑ</span>
+                                <span className={`font-bold text-xs uppercase tracking-wide transition-colors ${isOpen('comp') ? 'text-blue-900 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400 group-hover:text-blue-800 dark:group-hover:text-blue-400'}`}>Υποχρεωτικά</span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">{data.compulsory.length}</span>
@@ -276,7 +284,7 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                                    <span className="font-black text-[10px]">Ρ</span>
                                 </div>
                                 <div className="text-left">
-                                    <span className={`block font-bold text-xs uppercase tracking-wide transition-colors ${isOpen('flow') ? 'text-purple-900 dark:text-purple-300' : 'text-gray-600 dark:text-gray-400 group-hover:text-purple-800 dark:group-hover:text-purple-400'}`}>ΚΑΤ' ΕΠΙΛΟΓΗΝ</span>
+                                    <span className={`block font-bold text-xs uppercase tracking-wide transition-colors ${isOpen('flow') ? 'text-purple-900 dark:text-purple-300' : 'text-gray-600 dark:text-gray-400 group-hover:text-purple-800 dark:group-hover:text-purple-400'}`}>Κατ' Επιλογήν</span>
                                     <span className="text-[9px] text-gray-400 dark:text-gray-500 font-medium hidden sm:inline-block leading-none">Υποχρεωτικά Ροών</span>
                                 </div>
                             </div>
@@ -296,7 +304,7 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${isOpen('free') ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-900/40 group-hover:text-emerald-500 dark:group-hover:text-emerald-400'}`}>
                                    <span className="font-black text-[10px]">Ε</span>
                                 </div>
-                                <span className={`font-bold text-xs uppercase tracking-wide transition-colors ${isOpen('free') ? 'text-emerald-900 dark:text-emerald-300' : 'text-gray-600 dark:text-gray-400 group-hover:text-emerald-800 dark:group-hover:text-emerald-400'}`}>ΕΛΕΥΘΕΡΑ / ΑΛΛΑ</span>
+                                <span className={`font-bold text-xs uppercase tracking-wide transition-colors ${isOpen('free') ? 'text-emerald-900 dark:text-emerald-300' : 'text-gray-600 dark:text-gray-400 group-hover:text-emerald-800 dark:group-hover:text-emerald-400'}`}>Ελεύθερα / Άλλα</span>
                             </div>
                             <div className="flex items-center gap-3">
                                 <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">{data.free.length}</span>
@@ -312,7 +320,7 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
             <div className="bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-800 p-4 flex flex-wrap gap-4 items-center justify-between text-xs font-medium text-gray-500 dark:text-gray-400 rounded-b-2xl">
                 {/* Left: Total Courses */}
                 <div className="flex items-center gap-2">
-                    <span className="uppercase tracking-widest text-[10px] font-bold text-gray-400 dark:text-gray-500">Συνολο Μαθηματων</span>
+                    <span className="uppercase tracking-widest text-[10px] font-bold text-gray-400 dark:text-gray-500">Σύνολο Μαθημάτων</span>
                     <span className="bg-gray-800 dark:bg-gray-700 text-white px-2.5 py-1 rounded-lg font-bold text-sm shadow-sm">{data.totalSelected}</span>
                 </div>
 

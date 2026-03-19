@@ -328,7 +328,7 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
                     <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-gray-200 dark:border-gray-700 overflow-hidden z-50 max-h-[60vh] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
                         {searchResults.length > 0 ? (
                             <div className="py-2">
-                                <div className="px-4 pb-2 text-[10px] font-bold uppercase text-gray-400 dark:text-gray-500 tracking-wider border-b border-gray-100 dark:border-gray-750 mb-1">ΑΠΟΤΕΛΕΣΜΑΤΑ</div>
+                                <div className="px-4 pb-2 text-[10px] font-bold uppercase text-gray-400 dark:text-gray-500 tracking-wider border-b border-gray-100 dark:border-gray-750 mb-1">Αποτελέσματα</div>
                                 {searchResults.map(c => (
                                     <button
                                         key={c.id}
@@ -343,11 +343,11 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
                                             <span className="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-md border border-gray-200 dark:border-gray-600">ΕΞ. {c.semester}</span>
                                             {c.flow_code && c.flow_code !== 'X' && c.flow_code !== 'K' && (
                                                 <span className="bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border border-purple-100 dark:border-purple-800 px-2 py-0.5 rounded-md">
-                                                    {(FLOW_NAMES[c.flow_code] || `ΡΟΗ ${c.flow_code}`).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()}
+                                                    {FLOW_NAMES[c.flow_code] || `Ροή ${c.flow_code}`}
                                                 </span>
                                             )}
                                             {getCourseCategory(c) === 'compulsory' && (
-                                                <span className="text-blue-600 dark:text-blue-400 font-bold">ΥΠΟΧΡΕΩΤΙΚΟ</span>
+                                                <span className="text-blue-600 dark:text-blue-400 font-bold">Υποχρεωτικό</span>
                                             )}
                                         </div>
                                     </button>
@@ -374,7 +374,7 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
                 <p>Το πλήθος των μαθημάτων <strong>ανά εξάμηνο</strong> δεν πρέπει να υπερβαίνει τα <strong>12</strong>.</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white/60 dark:bg-gray-800/60 p-3 rounded-xl border border-blue-100/50 dark:border-blue-800/50">
                     <div>
-                        <span className="font-bold block mb-1 text-xs uppercase text-blue-800 dark:text-blue-300">ΠΡΟΤΕΙΝΟΜΕΝΑ ΟΡΙΑ (βάσει Μ.Ο.):</span>
+                        <span className="font-bold block mb-1 text-xs uppercase text-blue-800 dark:text-blue-300">Προτεινόμενα Όρια (βάσει Μ.Ο.):</span>
                         <ul className="list-disc list-inside text-xs space-y-1 text-blue-800/80 dark:text-blue-300/80 font-medium">
                             <li>7 για μ.ο. ≤ 8.5</li>
                             <li>8 για 8.5 &lt; μ.ο ≤ 9</li>
@@ -450,9 +450,9 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
                 </div>
               </div>
 
-              {/* Text-based Rules */}
+              {/* Κορμός Rules (P flow + Global XOR) */}
               <div className="space-y-2">
-                {semanticRules.filter(r => r.type === 'compulsory' && (r.flowCode === 'CORE' || r.ruleId === 'basic_flows')).map((rule) => {
+                {semanticRules.filter(r => r.flowCode === 'P' || r.ruleId === 'global-xor-3068-3450').map((rule) => {
                   const isMet = rule.isMet;
                   return (
                     <div key={rule.ruleId} className={`p-2.5 rounded-xl border flex items-center justify-between transition-all ${isMet ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-300' : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400'}`}>
@@ -472,12 +472,36 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
                 })}
               </div>
 
+              {/* Global Constraints */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-800 rounded-xl p-3 shadow-sm space-y-1.5">
+                <span className="text-[8px] font-black uppercase text-gray-400 tracking-widest">ΚΑΝΟΝΕΣ ΟΔΗΓΟΥ ΣΠΟΥΔΩΝ</span>
+                {[
+                  { label: 'Ελεύθερα μαθήματα', value: detailedStats.freeCount, max: 5, ok: detailedStats.freeCount <= 5 },
+                  { label: 'Ανθρωπιστικά', value: detailedStats.humanitiesCount, max: 1, ok: detailedStats.humanitiesCount <= 1 },
+                  { label: 'Εκτός ροών', value: detailedStats.nonFlowCount, max: 1, ok: detailedStats.nonFlowCount <= 1 },
+                ].map((c) => (
+                  <div key={c.label} className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <div className={`w-3 h-3 rounded-full flex items-center justify-center shrink-0 ${c.ok ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'}`}>
+                        {c.ok ? (
+                          <svg className="w-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                        ) : (
+                          <span className="text-[7px] font-black">!</span>
+                        )}
+                      </div>
+                      <span className="text-[9px] font-bold text-gray-600 dark:text-gray-400">{c.label}</span>
+                    </div>
+                    <span className={`text-[9px] font-black ${c.ok ? 'text-gray-500' : 'text-amber-600'}`}>{c.value}/{c.max}</span>
+                  </div>
+                ))}
+              </div>
+
               {/* Flow Cards */}
               <div className="space-y-2">
                 {Object.entries(detailedStats.flowStats).map(([key, stat]) => {
                   const greekKey = FLOW_NAMES[key]?.replace(/Flow |Ροή /g, '') || key;
                   const flowLabel = greekKey === 'Κορμός' ? 'Κορμός' : `Ροή ${greekKey}`;
-                  if (key === 'CORE') return null; // Handled above
+                  if (key === 'P') return null; // Κορμός handled above in text-based rules
 
                   return (
                     <div key={key} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-800 rounded-xl p-3 shadow-sm">
@@ -494,7 +518,7 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
                       <div className="space-y-2">
                         <div>
                           <div className="flex justify-between text-[8px] font-black uppercase text-gray-400 mb-0.5 px-0.5">
-                            <span>ΥΠΟΧΡΕΩΤΙΚΑ</span>
+                            <span>Υποχρεωτικά</span>
                             <span>{stat.requiredCompulsory - stat.missingCompulsory}/{stat.requiredCompulsory}</span>
                           </div>
                           <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -503,7 +527,7 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
                         </div>
                         <div>
                           <div className="flex justify-between text-[8px] font-black uppercase text-gray-400 mb-0.5 px-0.5">
-                            <span>ΕΠΙΛΟΓΗΣ</span>
+                            <span>ΣΥΝΟΛΟ</span>
                             <span>{stat.requiredTotal - stat.missingTotal}/{stat.requiredTotal}</span>
                           </div>
                           <div className="h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -519,7 +543,7 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
               {/* Free Electives */}
               <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-800 rounded-xl p-3 shadow-sm">
                 <div className="flex items-center justify-between mb-2">
-                   <span className="text-[10px] font-black text-gray-800 dark:text-gray-100 uppercase">ΕΛΕΥΘΕΡΑ</span>
+                   <span className="text-[10px] font-black text-gray-800 dark:text-gray-100 uppercase">Ελεύθερα</span>
                    <span className="text-[10px] font-black text-gray-600">{detailedStats.freeCount} / 5</span>
                 </div>
                 <div className="flex gap-1">
@@ -532,7 +556,7 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
               {/* Warnings */}
               {sidebarWarnings.length > 0 && (
                 <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/50 rounded-xl p-3">
-                  <span className="text-[9px] font-black uppercase text-amber-700 block mb-1">ΠΡΟΕΙΔΟΠΟΙΗΣΕΙΣ</span>
+                  <span className="text-[9px] font-black uppercase text-amber-700 block mb-1">Προειδοποιήσεις</span>
                   <ul className="space-y-1">
                     {sidebarWarnings.slice(0, 3).map((w, idx) => (
                       <li key={idx} className="text-[9px] font-bold text-amber-800 leading-tight flex gap-1.5">
@@ -556,14 +580,14 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
                 className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-white dark:bg-gray-800 text-blue-600 border-2 border-blue-500 rounded-xl text-[10px] font-black transition-all hover:bg-blue-50 active:scale-95 disabled:opacity-50"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-                ΑΠΟΘΗΚΕΥΣΗ
+                Αποθήκευση
               </button>
               <button
                 disabled={!isComplete}
                 onClick={() => alert('Η επιλογή ολοκληρώθηκε!')}
                 className={`w-full py-2.5 rounded-xl text-[10px] font-black transition-all active:scale-95 flex items-center justify-center gap-2 ${isComplete ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-gray-100 text-gray-400'}`}
               >
-                ΟΛΟΚΛΗΡΩΣΗ
+                Ολοκλήρωση
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
               </button>
               
@@ -577,7 +601,7 @@ const Step3Courses: React.FC<Step3CoursesProps> = ({ onSaveRequest }) => {
       {/* Mobile Sticky Action Bar */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 p-4 shadow-[0_-8px_30px_rgb(0,0,0,0.12)] z-40 flex items-center justify-between">
           <div className="flex flex-col">
-              <span className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider">ΣΥΝΟΛΟ</span>
+              <span className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider">Σύνολο</span>
               <div className="flex items-baseline gap-1">
                   <span className={`text-2xl font-black ${selectedCourseIds.length > 25 ? 'text-rose-500 dark:text-rose-400' : selectedCourseIds.length === 25 ? 'text-green-500 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>{selectedCourseIds.length}</span>
                   <span className="text-sm font-medium text-gray-400 dark:text-gray-500">/ 25</span>

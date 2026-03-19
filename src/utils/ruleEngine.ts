@@ -13,7 +13,7 @@ export const DIRECTIONS = {
 
 export const getFlowNameForWarning = (code: string) => {
     const name = FLOW_NAMES[code] || `Ροή ${code}`;
-    return name === 'Κορμός' ? 'ΚΟΡΜΟΣ' : name;
+    return name;
 };
 
 // Flow Definitions
@@ -162,7 +162,7 @@ export const calculateDetailedStats = (
     // --- 3. Global Limits ---
 
     const freeElectives = selectedCourses.filter(c => {
-        if (c.flow_code === 'P') return false; // ΚΟΡΜΟΣ courses are never *automatically* free electives
+        if (c.flow_code === 'P') return false; // Κορμός courses are never *automatically* free electives
         if (c.flow_code === HUMANITIES || c.type === 'humanities') return false; // Tracked separately
         if (c.flow_code === NON_FLOW) return false; // Tracked separately
         

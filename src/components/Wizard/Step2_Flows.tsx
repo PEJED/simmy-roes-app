@@ -203,7 +203,7 @@ const Step2Flows: React.FC = () => {
                <div key={code} className="p-5 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900/50 dark:to-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 flex flex-col h-full shadow-sm relative overflow-hidden group">
                  <div className="absolute top-0 right-0 w-20 h-20 bg-blue-600/5 dark:bg-blue-400/5 rounded-bl-[40px] -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
 
-                 <span className="inline-block px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider text-gray-500 dark:text-gray-400 bg-gray-200/80 dark:bg-gray-700/80 uppercase mb-3 self-start z-10 backdrop-blur-sm">Υποχρεωτικη</span>
+                 <span className="inline-block px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider text-gray-500 dark:text-gray-400 bg-gray-200/80 dark:bg-gray-700/80 uppercase mb-3 self-start z-10 backdrop-blur-sm">Υποχρεωτική</span>
                  <div className="text-xl font-black text-gray-900 dark:text-gray-100 leading-tight mb-4 z-10">{getGreekName(code)}</div>
 
                  <div className="mt-auto flex items-center text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-100/80 dark:bg-blue-900/50 px-3 py-1.5 rounded-lg self-start z-10">
@@ -217,7 +217,7 @@ const Step2Flows: React.FC = () => {
                <div className="absolute inset-0 bg-white/40 dark:bg-gray-900/40"></div>
                <div className="relative z-10 flex flex-col h-full">
                  <span className="inline-block px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider text-indigo-700 dark:text-indigo-300 bg-indigo-100/80 dark:bg-indigo-900/50 uppercase mb-3 self-start backdrop-blur-sm border border-indigo-200 dark:border-indigo-800/50">
-                   Επιπλεον Επιλογη
+                   Επιπλέον Επιλογή
                  </span>
 
                  <div className="flex-1 flex flex-col">
