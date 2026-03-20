@@ -26,6 +26,7 @@ interface SemesterSectionProps {
     expandedSections: Record<string, boolean>;
     toggleSection: (sem: number, section: string) => void;
     satisfiedFlows?: Set<string>;
+    compulsoryMetFlows?: Set<string>;
     hideWarnings?: boolean;
 }
 
@@ -40,6 +41,7 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
     expandedSections,
     toggleSection,
     satisfiedFlows = new Set(), // Default empty set
+    compulsoryMetFlows = new Set(), // Default empty set
     hideWarnings = false
 }) => {
 
@@ -143,7 +145,7 @@ const SemesterSection: React.FC<SemesterSectionProps> = memo(({
                     if (isHardLimit) {
                         disabled = true;
                         tooltip = "Οριο 12 μαθημάτων/εξάμηνο";
-                    } else if (blockingRule) {
+                    } else if (blockingRule && !(c.flow_code && compulsoryMetFlows.has(c.flow_code))) {
                         disabled = true;
                         tooltip = `Κανόνας ολοκληρώθηκε: ${blockingRule.description}`;
                     } else if (isFlowSection && c.flow_code && satisfiedFlows.has(c.flow_code)) {
